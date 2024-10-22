@@ -1,5 +1,0 @@
-# Integrantes:
--
--
--
-- Rodrigo Vargas
