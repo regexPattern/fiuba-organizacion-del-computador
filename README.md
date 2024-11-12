@@ -1,5 +1,7 @@
 # El Asalto
 
+- [Video del juego real](https://www.youtube.com/watch?v=8QOmm8-jh8k)
+
 | Nombre | Padrón | 
 | --- | --- |
 | Rodrigo Vargas | |
