@@ -78,7 +78,7 @@ main:
     syscall
 
 jugar_turno:
-    mov rdi,29
+    mov rdi,2
     mov rsi,tablero
     call movimientos_soldados
 
