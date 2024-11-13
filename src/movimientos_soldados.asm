@@ -1,4 +1,4 @@
-global movimientos_soldado
+global movimientos_soldados
 
 section .text
 
@@ -13,7 +13,7 @@ section .text
 ;  • rsi - Puntero al tablero
 ; Retorna:
 ;  • rax - Puntero al arreglo de índices
-movimientos_soldado:
+movimientos_soldados:
     push rbp
     mov rbp, rsp
     sub rsp, 4
@@ -41,6 +41,8 @@ movimientos_soldado:
     ; Verificar movimiento vertical
     mov r11, rdi
     add r11, 7
+    ; Verificar si ya estamos en el fondo del castillo (nos salimos del tablero
+    ; si avanzamos a la siguiente fila)
     cmp r11, 48
     jg .finalizar
     cmp BYTE [rsi + r11], ' '
@@ -50,10 +52,12 @@ movimientos_soldado:
 
 .check_diagonal_izq:
     ; Verificar diagonal izquierda
+    ; Si estamos en la columna 2 y nos movemos a la izquierda, nos estaríamos
+    ; saliendo del tablero
+    cmp r9, 2
+    jle .check_diagonal_der
     mov r11, rdi
     add r11, 6
-    cmp r11, 48
-    jg .check_diagonal_der
     cmp BYTE [rsi + r11], ' '
     jne .check_diagonal_der
     mov BYTE [r10 + rcx], 6
@@ -61,10 +65,12 @@ movimientos_soldado:
 
 .check_diagonal_der:
     ; Verificar diagonal derecha
+    ; Si estamos en la columna 4 y nos movemos a la izquierda, nos estaríamos
+    ; saliendo del tablero
+    cmp r9, 4
+    jge .finalizar
     mov r11, rdi
     add r11, 8
-    cmp r11, 48
-    jg .finalizar
     cmp BYTE [rsi + r11], ' '
     jne .finalizar
     mov BYTE [r10 + rcx], 8
@@ -73,10 +79,11 @@ movimientos_soldado:
 
 .aspa_izquierda:
     ; Si estamos en la última fila
-    cmp r8, 5
+    cmp r8, 4
     je .agregar_mov_derecha
 
-    ; Verificar movimiento vertical/diagonal
+    ; No estamos en la última fila del aspa, por lo que al movernos hacia
+    ; adelante no nos saldríamos del tablero
     mov r11, rdi
     add r11, 7
     cmp BYTE [rsi + r11], ' '
@@ -93,17 +100,16 @@ movimientos_soldado:
     mov r11, rdi
     add r11, 8
     cmp BYTE [rsi + r11], ' '
-    jne .agregar_mov_derecha
+    jne .finalizar
     mov BYTE [r10 + rcx], 8
     inc rcx
-    jmp .agregar_mov_derecha
+    jmp .finalizar
 
 .aspa_derecha:
     ; Si estamos en la última fila
-    cmp r8, 5
+    cmp r8, 4
     je .agregar_mov_izquierda
 
-    ; Verificar movimiento vertical/diagonal
     mov r11, rdi
     add r11, 7
     cmp BYTE [rsi + r11], ' '
@@ -115,13 +121,11 @@ movimientos_soldado:
     ; Solo diagonal izquierda
     mov r11, rdi
     add r11, 6
-    cmp r11, 48
-    jg .agregar_mov_izquierda
     cmp BYTE [rsi + r11], ' '
-    jne .agregar_mov_izquierda
+    jne .finalizar
     mov BYTE [r10 + rcx], 6
     inc rcx
-    jmp .agregar_mov_izquierda
+    jmp .finalizar
 
 .agregar_mov_derecha:
     mov r11, rdi

@@ -1,6 +1,6 @@
 global main
 
-extern movimientos_soldado
+extern movimientos_soldados
 extern tablero_inicializar
 extern tablero_renderizar
 extern tablero_finalizar
@@ -8,11 +8,11 @@ extern tablero_finalizar
 extern printf
 
 section .data
-tablero db ' ', ' ', 'X', 'X', 'X', ' ', ' '
-        db ' ', ' ', 'X', 'X', 'X', ' ', ' '
-        db 'X', 'X', 'X', 'X', 'X', 'X', 'X'
-        db 'X', 'X', 'X', 'X', 'X', 'X', 'X'
-        db 'X', 'X', ' ', ' ', ' ', 'X', 'X'
+tablero db ' ', ' ', ' ', ' ', ' ', ' ', ' '
+        db ' ', ' ', ' ', ' ', ' ', ' ', ' '
+        db ' ', ' ', ' ', ' ', ' ', ' ', ' '
+        db ' ', ' ', ' ', ' ', ' ', ' ', ' '
+        db ' ', 'X', 'X', ' ', ' ', 'X', ' '
         db ' ', ' ', ' ', ' ', 'O', ' ', ' '
         db ' ', ' ', 'O', ' ', ' ', ' ', ' '
 
@@ -80,6 +80,6 @@ main:
 jugar_turno:
     mov rdi,29
     mov rsi,tablero
-    call movimientos_soldado
+    call movimientos_soldados
 
     ret
