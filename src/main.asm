@@ -8,11 +8,11 @@ extern tablero_finalizar
 extern printf
 
 section .data
-tablero db ' ', ' ', ' ', ' ', ' ', ' ', ' '
-        db ' ', ' ', ' ', ' ', ' ', ' ', ' '
-        db ' ', ' ', ' ', ' ', ' ', ' ', ' '
-        db ' ', ' ', ' ', ' ', ' ', ' ', ' '
-        db ' ', 'X', 'X', ' ', ' ', 'X', ' '
+tablero db ' ', ' ', 'X', 'X', 'X', ' ', ' '
+        db ' ', ' ', 'X', 'X', 'X', ' ', ' '
+        db 'X', 'X', 'X', 'X', 'X', 'X', 'X'
+        db 'X', 'X', 'X', 'X', 'X', 'X', 'X'
+        db 'X', 'X', ' ', 'X', ' ', 'X', 'X'
         db ' ', ' ', ' ', ' ', 'O', ' ', ' '
         db ' ', ' ', 'O', ' ', ' ', ' ', ' '
 
@@ -78,7 +78,7 @@ main:
     syscall
 
 jugar_turno:
-    mov rdi,2
+    mov rdi,31
     mov rsi,tablero
     call movimientos_soldados
 
