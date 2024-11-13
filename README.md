@@ -4,7 +4,7 @@
 
 | Nombre | Padrón | 
 | --- | --- |
-| Rodrigo Vargas | |
+| Rodrigo Vargas | 97076 |
 | Gerónimo Fanti | 109712 |
 | Melina Loscalzo | 106571 |
 | Carlos Castillo | 108535 |
