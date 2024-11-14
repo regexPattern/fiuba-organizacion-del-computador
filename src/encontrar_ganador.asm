@@ -1,6 +1,6 @@
 global encontrar_ganador
 
-section.text
+section .text
 
 ; Retorna en RAX al ganador (si lo hay).
 ; 0 Si no hay.
@@ -19,7 +19,7 @@ encontrar_ganador:
     mov rax, r9
     ret
 
-; Retorna "1" si: 
+; Retorna "1" si:
 ; 1) Todas las posiciones de la fortaleza estan ocupadas
 ; 2) Los oficiales no pueden moverse.
 .chequear_si_ganan_soldados:
@@ -30,8 +30,8 @@ encontrar_ganador:
     inc r9
     mov rax, r9
     ret
-    
-; Retorna "2" si: 
+
+; Retorna "2" si:
 ; 1) Solo queden 8 soldados(o menos)
 .chequear_si_ganan_oficiales:
 

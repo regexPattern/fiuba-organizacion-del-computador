@@ -1,6 +1,7 @@
 global main
 
 extern movimientos_soldados
+extern movimientos_oficiales
 extern tablero_inicializar
 extern tablero_renderizar
 extern tablero_finalizar
@@ -62,7 +63,7 @@ main:
     ; `jugar_turno` espera que [es_turno_soldado] determine si es el turno del soldado
     call jugar_turno
 
-    jmp .check_ganador
+    jmp check_ganador
     ; Queda guardado en [ganador] quien gana
 
     ; Verificar si el juego ha terminado
@@ -84,14 +85,34 @@ main:
     mov rdi,0
     syscall
 
-.jugar_turno:
+jugar_turno:
+    ; Acá tenemos que pasar el índice de la celda seleccionada, vendría a ser
+    ; toda la parte de Melina.
     mov rdi,31
+
     mov rsi,tablero
+
+    cmp byte [es_turno_soldado], 1
+    jne .mover_oficial
+
+.mover_soldado:
     call movimientos_soldados
+    jmp .continue_movimiento
+
+.mover_oficial:
+    call movimientos_oficiales
+
+.continue_movimiento:
+    ; Acá vendría la parte de Gero.
+    ; Los movimientos de la siguiente ficha quedan en rax, no importa si es
+    ; oficial o soldado, ya se tiene el arreglo de posiciones válidas.
+    ;
+    ; Hay que ver cómo hacemos que efectivamente se tomen las acciones que haya
+    ; que tomarse en el movimiento: eliminar un soldado o un oficial.
 
     ret
 
-.check_ganador:
+check_ganador:
     mov rdi, tablero
     mov rsi, [es_turno_soldado]
     call encontrar_ganador
