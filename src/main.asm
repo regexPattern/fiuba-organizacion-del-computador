@@ -4,6 +4,7 @@ extern movimientos_soldados
 extern tablero_inicializar
 extern tablero_renderizar
 extern tablero_finalizar
+extern encontrar_ganador
 
 extern printf
 
@@ -23,11 +24,14 @@ mensaje_turno_oficial db "Turno del oficial.",10,0
 section .bss
 juego_activo resb 1     ; Bandera para saber si el juego está activo (1 = activo, 0 = terminado)
 es_turno_soldado resb 1 ; Bandera para alternar turnos (1 = soldado, 0 = oficial)
+ganador resb 1 ; (0 = sin ganador, 1 = soldados, 2 = oficiales)
 
 section .text
 main:
     ; Inicializamos todo para arrancar el juego en un estado jugable.
     mov byte [juego_activo], 1 ; Iniciamos el juego
+
+    mov byte [ganador], 0 ; Inicia sin ganador
 
     call tablero_inicializar ; Cargamos el estado inicial del tablero
 
@@ -58,6 +62,9 @@ main:
     ; `jugar_turno` espera que [es_turno_soldado] determine si es el turno del soldado
     call jugar_turno
 
+    jmp .check_ganador
+    ; Queda guardado en [ganador] quien gana
+
     ; Verificar si el juego ha terminado
     ; call verificar_si_termino_juego
     ; Asumimos que `verificar_si_termino_juego` pone 0 en [juegoActivo] si terminó el juego
@@ -77,9 +84,16 @@ main:
     mov rdi,0
     syscall
 
-jugar_turno:
+.jugar_turno:
     mov rdi,31
     mov rsi,tablero
     call movimientos_soldados
 
+    ret
+
+.check_ganador:
+    mov rdi, tablero
+    mov rsi, [es_turno_soldado]
+    call encontrar_ganador
+    mov [ganador], rax
     ret
