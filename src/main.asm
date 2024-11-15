@@ -1,4 +1,5 @@
 global main
+global .continue_movimiento
 
 extern movimientos_soldados
 extern movimientos_oficiales
@@ -109,7 +110,6 @@ jugar_turno:
 .mover_oficial:
     call movimientos_oficiales
 
-; Aca deberia seguir el flujo del programa y que se repita 
 
 .continue_movimiento:
     call pedir_movimiento
@@ -148,7 +148,7 @@ validar_movimiento:
 
     ; Avanzo al siguiente valor en el arreglo de desplazamientos
     add rax, 1
-    jmp check_movimiento
+    jmp validar_movimiento
 
 .movimiento_invalido:
     mov byte [es_movimiento_valido], 0
