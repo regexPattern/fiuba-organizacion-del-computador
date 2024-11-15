@@ -135,11 +135,9 @@ validar_movimiento:
 .movimiento_valido:
     mov byte [es_movimiento_valido], 1
     ret
-
-
 check_ganador:
-    mov rdi, tablero
-    mov rsi, [es_turno_soldado]
+    mov rdi, [es_turno_soldado]
+    mov rsi, tablero
     call encontrar_ganador
     mov [ganador], rax
     ret
