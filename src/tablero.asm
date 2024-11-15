@@ -1,3 +1,4 @@
+global tablero
 global tablero_finalizar
 global tablero_inicializar
 global tablero_renderizar
@@ -9,36 +10,39 @@ extern fread
 extern printf
 extern rewind
 extern scanf
-extern fflush
 
 %define LONGITUD_CELDA_ASCII 29
 
 section .data
+
+tablero db ' ', ' ', ' ', ' ', ' ', ' ', ' '
+        db ' ', ' ', ' ', ' ', ' ', ' ', ' '
+        db ' ', ' ', ' ', ' ', ' ', ' ', ' '
+        db ' ', ' ', ' ', ' ', ' ', 'X', ' '
+        db ' ', ' ', ' ', ' ', ' ', 'O', ' '
+        db ' ', ' ', ' ', ' ', ' ', ' ', ' '
+        db ' ', ' ', ' ', ' ', ' ', ' ', ' '
+
 ICONO_ESQ_VACIA db "   ",0
-SALTO_LINEA     db 10,0
-
-ANSI_LABEL_CELDA        db 0x1b,"[38;5;033;00000049m %c ",0x1b,"[0m",0
+SALTO_LINEA db 10,0
+ANSI_LABEL_CELDA db 0x1b,"[38;5;033;00000049m %c ",0x1b,"[0m",0
 ANSI_CELDA_SELECCIONADA db 0x1b,"[38;5;000;48;5;033m %c ",0x1b,"[0m",0
-
-PATH_ARCHIVO_TABLERO         db "./static/tablero-abajo.dat",0
+PATH_ARCHIVO_TABLERO db "./static/tablero-abajo.dat",0
 MODO_LECTURA_ARCHIVO_TABLERO db "rb",0
-
-INPUT_SELEC_FILA  db "seleccionar fila: ",0
+INPUT_SELEC_FILA db "seleccionar fila: ",0
 INPUT_SELEC_COLUM db "seleccionar columna: ",0
 INPUT_ENTERO db "%i",0
-INPUT_CHAR   db " %c\n",0
+INPUT_CHAR db " %c\n",0
 
-fila_seleccionada    db -1
+fila_seleccionada db -1
 columna_seleccionada db -1
 
 section .bss
-tablero resq 1
 
 buffer_ansi_celda resb LONGITUD_CELDA_ASCII
 file_desc_archivo_tablero resq 1
-
 buffer_input_entero resd 1
-buffer_input_char   resb 1
+buffer_input_char resb 1
 
 section .text
 

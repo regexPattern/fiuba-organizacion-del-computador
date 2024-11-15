@@ -1,34 +1,27 @@
-global movimientos_soldados
+global cargar_movimientos_soldado
+global array_movimientos_soldado
+
+%define MAX_MOVIMIENTOS_POSIBLES 4
+
+extern tablero
+
+section .bss
+
+array_movimientos_soldado resb MAX_MOVIMIENTOS_POSIBLES
 
 section .text
 
-; Retorna un arreglo con los índices de offsets de las posibles posiciones a
-; moverse. Es decir, si la ficha se tiene como opación moverse a la siguiente
-; fila, este arreglo contrendría un +7, si se puede mover a la izquierda sería
-; -1, a la derecha +1, etc.
-; El arreglo está terminado en 0, es decir, si solo tiene un 0 es porque la
-; ficha no se puede mover.
-; Parámetros:
-;  • rdi - Posición actual del soldado (se asume que es válida ya)
-;  • rsi - Puntero al tablero
-; Retorna:
-;  • rax - Puntero al arreglo de índices
-movimientos_soldados:
-    push rbp
-    mov rbp, rsp
-    sub rsp, 4
-
+cargar_movimientos_soldado:
     ; Calculamos fila y columna
     mov rax, rdi
     mov rcx, 7
     xor rdx, rdx
-    div rcx          ; rax = fila, rdx = columna
-    mov r8, rax      ; r8 = fila
-    mov r9, rdx      ; r9 = columna
+    div rcx ; rax = fila, rdx = columna
 
-    ; Inicializamos el índice para el array de movimientos
-    xor rcx, rcx     ; rcx = índice del array
-    lea r10, [rbp-4] ; r10 = puntero al array
+    mov r8, rax ; r8 = fila
+    mov r9, rdx ; r9 = columna
+
+    xor rcx, rcx ; rcx = índice del array
 
     ; Primero verificamos si estamos en las aspas
     cmp r9, 1
@@ -37,43 +30,48 @@ movimientos_soldados:
     jge .aspa_derecha
 
     ; Si no estamos en las aspas, verificamos movimientos normales
+
 .check_verticales:
     ; Verificar movimiento vertical
     mov r11, rdi
     add r11, 7
+
     ; Verificar si ya estamos en el fondo del castillo (nos salimos del tablero
     ; si avanzamos a la siguiente fila)
+    ;
     cmp r11, 48
     jg .finalizar
-    cmp BYTE [rsi + r11], ' '
+    cmp BYTE [tablero + r11], ' '
     jne .check_diagonal_izq
-    mov BYTE [r10 + rcx], 7
+    mov BYTE [array_movimientos_soldado + rcx], 7
     inc rcx
 
 .check_diagonal_izq:
     ; Verificar diagonal izquierda
     ; Si estamos en la columna 2 y nos movemos a la izquierda, nos estaríamos
     ; saliendo del tablero
+    ;
     cmp r9, 2
     jle .check_diagonal_der
     mov r11, rdi
     add r11, 6
-    cmp BYTE [rsi + r11], ' '
+    cmp BYTE [tablero + r11], ' '
     jne .check_diagonal_der
-    mov BYTE [r10 + rcx], 6
+    mov BYTE [array_movimientos_soldado + rcx], 6
     inc rcx
 
 .check_diagonal_der:
     ; Verificar diagonal derecha
     ; Si estamos en la columna 4 y nos movemos a la izquierda, nos estaríamos
     ; saliendo del tablero
+    ;
     cmp r9, 4
     jge .finalizar
     mov r11, rdi
     add r11, 8
-    cmp BYTE [rsi + r11], ' '
+    cmp BYTE [tablero + r11], ' '
     jne .finalizar
-    mov BYTE [r10 + rcx], 8
+    mov BYTE [array_movimientos_soldado + rcx], 8
     inc rcx
     jmp .finalizar
 
@@ -84,24 +82,26 @@ movimientos_soldados:
 
     ; No estamos en la última fila del aspa, por lo que al movernos hacia
     ; adelante no nos saldríamos del tablero
+    ;
     mov r11, rdi
     add r11, 7
-    cmp BYTE [rsi + r11], ' '
+    cmp BYTE [tablero + r11], ' '
     jne .check_diagonal_der_aspa_izq
-    mov BYTE [r10 + rcx], 7
+    mov BYTE [array_movimientos_soldado + rcx], 7
     inc rcx
 
     ; Acá estamos seguros de que no estamos en la última fila de la sección
     ; horizontal de la cruz, por lo que, estando en el aspa izquierda, cualquier
     ; movimiento diagonal a la derecha es válido a menos que esté ocupada esa
     ; casilla
+    ;
 .check_diagonal_der_aspa_izq:
     ; Solo diagonal derecha
     mov r11, rdi
     add r11, 8
-    cmp BYTE [rsi + r11], ' '
+    cmp BYTE [tablero + r11], ' '
     jne .finalizar
-    mov BYTE [r10 + rcx], 8
+    mov BYTE [array_movimientos_soldado + rcx], 8
     inc rcx
     jmp .finalizar
 
@@ -112,40 +112,48 @@ movimientos_soldados:
 
     mov r11, rdi
     add r11, 7
-    cmp BYTE [rsi + r11], ' '
+    cmp BYTE [tablero + r11], ' '
     jne .check_diagonal_izq_aspa_der
-    mov BYTE [r10 + rcx], 7
+    mov BYTE [array_movimientos_soldado + rcx], 7
     inc rcx
 
 .check_diagonal_izq_aspa_der:
     ; Solo diagonal izquierda
     mov r11, rdi
     add r11, 6
-    cmp BYTE [rsi + r11], ' '
+    cmp BYTE [tablero + r11], ' '
     jne .finalizar
-    mov BYTE [r10 + rcx], 6
+    mov BYTE [array_movimientos_soldado + rcx], 6
     inc rcx
     jmp .finalizar
 
 .agregar_mov_derecha:
     mov r11, rdi
     inc r11
-    cmp BYTE [rsi + r11], ' '
+    cmp BYTE [tablero + r11], ' '
     jne .finalizar
-    mov BYTE [r10 + rcx], 1
+    mov BYTE [array_movimientos_soldado + rcx], 1
     inc rcx
     jmp .finalizar
 
 .agregar_mov_izquierda:
     mov r11, rdi
     dec r11
-    cmp BYTE [rsi + r11], ' '
+    cmp BYTE [tablero + r11], ' '
     jne .finalizar
-    mov BYTE [r10 + rcx], -1
+    mov BYTE [array_movimientos_soldado + rcx], -1
     inc rcx
 
 .finalizar:
-    mov BYTE [r10 + rcx], 0 ; Terminamos el array con un 0
-    lea rax, [rbp-4]        ; Retornamos el puntero al array en rax
-    leave
+    mov r8, MAX_MOVIMIENTOS_POSIBLES
+    sub r8, rcx ; Calculamos cuántas posiciones nos faltan llenar
+
+    mov r9, rcx ; Guardamos la posición inicial en r9
+    mov rcx, r8 ; Movemos a rcx la cantidad de iteraciones para loop
+
+.loop_rellenar:
+    mov BYTE [array_movimientos_soldado + r9], 0
+    inc r9
+    loop .loop_rellenar
+
     ret
