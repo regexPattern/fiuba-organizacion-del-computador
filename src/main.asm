@@ -1,5 +1,4 @@
 global main
-global .continue_movimiento
 
 extern movimientos_soldados
 extern movimientos_oficiales
@@ -9,7 +8,6 @@ extern tablero_finalizar
 extern encontrar_ganador
 
 extern printf
-extern scanf
 
 section .data
 tablero db ' ', ' ', 'X', 'X', 'X', ' ', ' '
@@ -23,17 +21,11 @@ tablero db ' ', ' ', 'X', 'X', 'X', ' ', ' '
 mensaje_fin db "El juego ha terminado.",10,0
 mensaje_turno_soldado db "Turno del soldado.",10,0
 mensaje_turno_oficial db "Turno del oficial.",10,0
-mensaje_pedir_movimiento db "Ingrese el movimiento del soldado (posición objetivo): ", 0
-formato_entrada db "%d", 0
-mensaje_movimiento_invalido db "El movimiento ingresado es invalido."
 
 section .bss
 juego_activo resb 1     ; Bandera para saber si el juego está activo (1 = activo, 0 = terminado)
 es_turno_soldado resb 1 ; Bandera para alternar turnos (1 = soldado, 0 = oficial)
-es_movimiento_valido resb 1 ; (0 = invalido, 1 = valido)
 ganador resb 1 ; (0 = sin ganador, 1 = soldados, 2 = oficiales)
-movimiento_usuario resd 1
-
 
 section .text
 main:
@@ -110,54 +102,15 @@ jugar_turno:
 .mover_oficial:
     call movimientos_oficiales
 
-
 .continue_movimiento:
-    call pedir_movimiento
+    ; Acá vendría la parte de Gero.
+    ; Los movimientos de la siguiente ficha quedan en rax, no importa si es
+    ; oficial o soldado, ya se tiene el arreglo de posiciones válidas.
+    ;
+    ; Hay que ver cómo hacemos que efectivamente se tomen las acciones que haya
+    ; que tomarse en el movimiento: eliminar un soldado o un oficial.
 
-    ; r8 → movimiento ingresado del jugador, rdi → posicion actual del jugador
-    sub r8, rdi     ; ahora r8 deberia tener +1, -1, +7, -7, etc
-
-    call validar_movimiento
     ret
-
-; (provisional) pido el movimiento del jugador con la casilla correspondiente a la que se quiere mover
-pedir_movimiento:
-    mov rdi, mensaje_pedir_movimiento
-    call printf
-
-    mov rdi, formato_entrada
-    mov rsi, movimiento_usuario
-    call scanf
-
-    mov rax, [movimiento_usuario]
-    mov r8, rax         ; guardo el movimiento del jugador en r8
-    ret
-
-
-; Bucle para recorrer el arreglo de desplazamientos posibles
-validar_movimiento: 
-    mov rbx, [rax]      ; Cargar el valor actual del arreglo en rbx:
-    
-    ; Comparo si el valor de rbx (subarreglo) es igual al desplazamiento (r8)
-    cmp rbx, r8
-    je .movimiento_valido
-
-    ; Verifico si se llego al final del arreglo
-    cmp rbx, 0
-    jz .movimiento_invalido  ; Si el valor es 0, es el final del arreglo, movimiento no válido
-
-    ; Avanzo al siguiente valor en el arreglo de desplazamientos
-    add rax, 1
-    jmp validar_movimiento
-
-.movimiento_invalido:
-    mov byte [es_movimiento_valido], 0
-    ret
-
-.movimiento_valido:
-    mov byte [es_movimiento_valido], 1
-    ret
-
 
 check_ganador:
     mov rdi, tablero
