@@ -1,5 +1,5 @@
-global cargar_movimientos_soldado
 global array_movimientos_soldado
+global cargar_movimientos_soldado
 
 %define MAX_MOVIMIENTOS_POSIBLES 4
 
