@@ -1,5 +1,12 @@
-global main
+%macro imprimirGanador 0
+    mov     rdi, mensaje_ganador
+    mov     rsi, [ganador]
+    sub     rsp, 8
+    call    printf
+    add     rsp, 8
+%endmacro
 
+global main
 extern cargar_movimientos_oficial
 extern cargar_movimientos_soldado
 extern encontrar_ganador
@@ -20,13 +27,14 @@ mensaje_turno_oficial db "Turno del oficial.",10,0
 mensaje_pedir_movimiento db "Ingrese el movimiento del soldado (posición objetivo): ",0
 formato_entrada db "%d", 0
 mensaje_movimiento_invalido db "El movimiento ingresado es invalido.",10,0
+mensaje_ganador db "El ganador es: %lli",10,0
 
 section .bss
 
 juego_activo resb 1     ; Bandera para saber si el juego está activo (1 = activo, 0 = terminado)
 es_turno_soldado resb 1 ; Bandera para alternar turnos (1 = soldado, 0 = oficial)
 es_movimiento_valido resb 1 ; (0 = invalido, 1 = valido)
-ganador resb 1 ; (0 = sin ganador, 1 = soldados, 2 = oficiales)
+ganador resq 1 ; (0 = sin ganador, 1 = soldados, 2 = oficiales)
 movimiento_usuario resd 1
 
 section .text
@@ -35,25 +43,27 @@ main:
     mov byte [juego_activo], 1 ; Iniciamos el juego
     mov byte [ganador], 0 ; Inicia sin ganador
     mov byte [es_turno_soldado], 0 ; Inicia con el turno del soldado
-
+    sub rsp, 8
     call tablero_inicializar ; Cargamos el estado inicial del tablero
-
+    add rsp, 8
 .game_loop:
     ; Comprobar si el juego está activo
     cmp byte [juego_activo], 1
     jne .exit ; Si juego_activo es 0, salimos del juego
 
     ; Mostrar el tablero
-    mov rdi,tablero
+    mov rdi, tablero
     call tablero_renderizar
-
+    call check_ganador
+    imprimirGanador
+    
     ; Jugar el turno según corresponda
     cmp byte [es_turno_soldado], 1
     jne .prompt_turno_oficial
     mov rdi, mensaje_turno_oficial
 
 .prompt_turno_soldado:
-    mov rdi, mensaje_turno_soldado
+    call printf
 
 .prompt_turno_oficial:
     call printf
@@ -138,6 +148,8 @@ validar_movimiento:
 check_ganador:
     mov rdi, [es_turno_soldado]
     mov rsi, tablero
+    sub rsp,8
     call encontrar_ganador
+    add rsp,8
     mov [ganador], rax
     ret
