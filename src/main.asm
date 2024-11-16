@@ -4,6 +4,7 @@ extern printf
 extern scanf
 
 extern array_celdas_seleccionadas
+extern array_movimientos_soldado
 extern cargar_movimientos_oficial
 extern cargar_movimientos_soldado
 extern check_ganador
@@ -17,8 +18,8 @@ extern tablero_renderizar
 section .data
 
 mensaje_fin db "El juego ha terminado.",10,0
-mensaje_turno_soldado db 10,0x1b,"[38;5;231;48;5;9m"," TURNO DEL SOLDADO ",0x1b,"[0m",10,10,0
-mensaje_turno_oficial db 10,0x1b,"[38;5;231;48;5;9m"," TURNO DEL OFICIAL ",0x1b,"[0m",10,10,0
+mensaje_turno_soldado db 10,0x1b,"[38;5;231;48;5;9m"," TURNO DEL SOLDADO ",0x1b,"[0m",10,0
+mensaje_turno_oficial db 10,0x1b,"[38;5;231;48;5;9m"," TURNO DEL OFICIAL ",0x1b,"[0m",10,0
 mensaje_movimiento_invalido db "El movimiento ingresado es invalido.",10,0
 mensaje_ganador db "El ganador es: %lli",10,0
 
@@ -77,7 +78,7 @@ main:
     push rax
     sub rsp, 8
 
-    mov byte [array_celdas_seleccionadas], 33 ; TODO, esto me lo deberia devolver seleccionar_celda
+    mov byte [array_celdas_seleccionadas], al
     mov rdi, array_celdas_seleccionadas
     call tablero_renderizar
 
@@ -104,7 +105,7 @@ main:
     push rax
     sub rsp, 8
 
-    mov rdi, 0
+    mov rdi, array_movimientos_soldado
     call tablero_renderizar
 
     add rsp, 8

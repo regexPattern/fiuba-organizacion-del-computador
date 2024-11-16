@@ -11,8 +11,14 @@ array_movimientos_soldado resb MAX_MOVIMIENTOS_POSIBLES
 
 section .text
 
+; PARÁMETROS:
+; * rdi - índice celda actual soldado
+;
+; RETORNA:
+; * rax - puntero al arreglo de movimientos posibles
+;
 cargar_movimientos_soldado:
-    ; Calculamos fila y columna
+    ; calculamos fila y columna
     mov rax, rdi
     mov rcx, 7
     xor rdx, rdx
@@ -41,9 +47,9 @@ cargar_movimientos_soldado:
     ;
     cmp r11, 48
     jg .finalizar
-    cmp BYTE [tablero + r11], ' '
+    cmp byte [tablero + r11], ' '
     jne .check_diagonal_izq
-    mov BYTE [array_movimientos_soldado + rcx], 7
+    mov byte [array_movimientos_soldado + rcx], r11b
     inc rcx
 
 .check_diagonal_izq:
@@ -55,9 +61,9 @@ cargar_movimientos_soldado:
     jle .check_diagonal_der
     mov r11, rdi
     add r11, 6
-    cmp BYTE [tablero + r11], ' '
+    cmp byte [tablero + r11], ' '
     jne .check_diagonal_der
-    mov BYTE [array_movimientos_soldado + rcx], 6
+    mov byte [array_movimientos_soldado + rcx], r11b
     inc rcx
 
 .check_diagonal_der:
@@ -69,9 +75,9 @@ cargar_movimientos_soldado:
     jge .finalizar
     mov r11, rdi
     add r11, 8
-    cmp BYTE [tablero + r11], ' '
+    cmp byte [tablero + r11], ' '
     jne .finalizar
-    mov BYTE [array_movimientos_soldado + rcx], 8
+    mov byte [array_movimientos_soldado + rcx], r11b
     inc rcx
     jmp .finalizar
 
@@ -85,9 +91,9 @@ cargar_movimientos_soldado:
     ;
     mov r11, rdi
     add r11, 7
-    cmp BYTE [tablero + r11], ' '
+    cmp byte [tablero + r11], ' '
     jne .check_diagonal_der_aspa_izq
-    mov BYTE [array_movimientos_soldado + rcx], 7
+    mov byte [array_movimientos_soldado + rcx], r11b
     inc rcx
 
     ; Acá estamos seguros de que no estamos en la última fila de la sección
@@ -99,9 +105,9 @@ cargar_movimientos_soldado:
     ; Solo diagonal derecha
     mov r11, rdi
     add r11, 8
-    cmp BYTE [tablero + r11], ' '
+    cmp byte [tablero + r11], ' '
     jne .finalizar
-    mov BYTE [array_movimientos_soldado + rcx], 8
+    mov byte [array_movimientos_soldado + rcx], r11b
     inc rcx
     jmp .finalizar
 
@@ -112,36 +118,36 @@ cargar_movimientos_soldado:
 
     mov r11, rdi
     add r11, 7
-    cmp BYTE [tablero + r11], ' '
+    cmp byte [tablero + r11], ' '
     jne .check_diagonal_izq_aspa_der
-    mov BYTE [array_movimientos_soldado + rcx], 7
+    mov byte [array_movimientos_soldado + rcx], r11b
     inc rcx
 
 .check_diagonal_izq_aspa_der:
     ; Solo diagonal izquierda
     mov r11, rdi
     add r11, 6
-    cmp BYTE [tablero + r11], ' '
+    cmp byte [tablero + r11], ' '
     jne .finalizar
-    mov BYTE [array_movimientos_soldado + rcx], 6
+    mov byte [array_movimientos_soldado + rcx], r11b
     inc rcx
     jmp .finalizar
 
 .agregar_mov_derecha:
     mov r11, rdi
     inc r11
-    cmp BYTE [tablero + r11], ' '
+    cmp byte [tablero + r11], ' '
     jne .finalizar
-    mov BYTE [array_movimientos_soldado + rcx], 1
+    mov byte [array_movimientos_soldado + rcx], r11b
     inc rcx
     jmp .finalizar
 
 .agregar_mov_izquierda:
     mov r11, rdi
     dec r11
-    cmp BYTE [tablero + r11], ' '
+    cmp byte [tablero + r11], ' '
     jne .finalizar
-    mov BYTE [array_movimientos_soldado + rcx], -1
+    mov byte [array_movimientos_soldado + rcx], r11b
     inc rcx
 
 .finalizar:

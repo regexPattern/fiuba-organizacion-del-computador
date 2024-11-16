@@ -15,13 +15,13 @@ extern scanf
 
 section .data
 
-tablero db ' ', ' ', ' ', ' ', ' ', ' ', ' '
-        db ' ', ' ', ' ', ' ', ' ', ' ', ' '
-        db ' ', ' ', ' ', ' ', ' ', ' ', ' '
-        db ' ', ' ', ' ', ' ', ' ', 'X', ' '
-        db ' ', ' ', ' ', ' ', ' ', 'O', ' '
-        db ' ', ' ', ' ', ' ', ' ', ' ', ' '
-        db ' ', ' ', ' ', ' ', ' ', ' ', ' '
+tablero db ' ', ' ', 'X', 'X', 'X', ' ', ' '
+        db ' ', ' ', 'X', 'X', 'X', ' ', ' '
+        db 'X', 'X', 'X', 'X', 'X', 'X', 'X'
+        db 'X', 'X', ' ', ' ', ' ', 'X', 'X'
+        db 'X', 'X', ' ', ' ', ' ', 'X', 'X'
+        db ' ', ' ', ' ', ' ', 'O', ' ', ' '
+        db ' ', ' ', 'O', ' ', ' ', ' ', ' '
 
 icono_esq_vacia db "   ",0
 salto_linea db 10,0
@@ -34,15 +34,6 @@ ansi_limpiar_pantalla db 0x1b,"[2J",0x1b,"[H",0
 ; constantes lectura de archivo
 path_archivo_tablero db "./static/tablero-abajo.dat",0
 modo_lectura_archivo_tablero db "rb",0
-
-; constantes scanf
-input_selec_fila db "seleccionar fila: ",0
-input_selec_colum db "seleccionar columna: ",0
-input_entero db "%i",0
-input_char db " %c\n",0
-
-fila_seleccionada db -1
-columna_seleccionada db -1
 
 section .bss
 
@@ -71,9 +62,8 @@ tablero_inicializar:
 ;  están seleccionadas (por ejemplo, para mover una ficha).
 ;
 ; PARÁMETROS:
-; * rdi - puntero al arreglo de movimientos posibles absolutos (no los offsets
-;   relativos a la ficha a mover, sino que los índices del 0 al 48) o 0, si no se
-;   no hay celdas seleccionadas (por ejemplo, al inicio de cada turno).
+; * rdi - puntero al arreglo de movimientos posibles absolutos o 0, si no se no
+;   hay celdas seleccionadas (por ejemplo, al inicio de cada turno).
 ;
 tablero_renderizar:
     push rbp
@@ -140,7 +130,7 @@ tablero_renderizar:
 
 .continue_renderizar_label_fila:
 	mov r14, r12
-	add r14,"0"
+	add r14, "0"
 	inc r14
 
 	mov rdi, ansi_label_celda
@@ -208,33 +198,6 @@ tablero_renderizar:
 	pop r12
 	pop r13
 	pop r14
-
-	ret
-
-tablero_seleccionar_celda:
-	mov rdi, input_selec_fila
-	call printf
-
-	mov rdi, input_entero
-	mov rsi, buffer_input_entero
-	call scanf
-
-	mov r12d,[buffer_input_entero]
-
-	mov rdi, input_selec_colum
-	call printf
-
-	mov rdi, input_char
-	mov rsi, buffer_input_char
-	call scanf
-
-	mov r13b,[buffer_input_char]
-
-	sub r12d,1
-	sub r13b,"A"
-
-	mov [fila_seleccionada],r12d
-	mov [columna_seleccionada],r13b
 
 	ret
 
