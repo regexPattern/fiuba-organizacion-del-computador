@@ -1,6 +1,6 @@
 global cargar_movimientos_oficial
 
-extern array_celdas_seleccionadas
+extern array_movimientos_posibles
 extern tablero
 
 section .text
@@ -61,7 +61,7 @@ cargar_movimientos_oficial:
     cmp byte [tablero + r11], ' '
     jne .check_limites_abajo
 
-    mov byte [array_celdas_seleccionadas + rcx], r11b
+    mov byte [array_movimientos_posibles + rcx], r11b
     inc rcx
 
     ; Si puedo hacer un movimiento de captura hacia arriba, automáticamente no
@@ -75,7 +75,7 @@ cargar_movimientos_oficial:
 
     cmp byte [tablero + r11], ' '
     jne .check_limites_abajo
-    mov byte [array_celdas_seleccionadas + rcx], r11b
+    mov byte [array_movimientos_posibles + rcx], r11b
     inc rcx
 
 .check_limites_abajo:
@@ -88,7 +88,7 @@ cargar_movimientos_oficial:
     mov rcx, r8 ; Movemos a rcx la cantidad de iteraciones para loop
 
 .loop_rellenar:
-    mov BYTE [array_celdas_seleccionadas + r9], 0
+    mov BYTE [array_movimientos_posibles + r9], 0
     inc r9
     loop .loop_rellenar
 

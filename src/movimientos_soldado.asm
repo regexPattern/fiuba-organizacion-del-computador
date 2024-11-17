@@ -1,6 +1,6 @@
 global cargar_movimientos_soldado
 
-extern array_celdas_seleccionadas
+extern array_movimientos_posibles
 extern tablero
 
 section .text
@@ -43,7 +43,7 @@ cargar_movimientos_soldado:
     jg .finalizar
     cmp byte [tablero + r11], ' '
     jne .check_diagonal_izq
-    mov byte [array_celdas_seleccionadas + rcx], r11b
+    mov byte [array_movimientos_posibles + rcx], r11b
     inc rcx
 
 .check_diagonal_izq:
@@ -57,7 +57,7 @@ cargar_movimientos_soldado:
     add r11, 6
     cmp byte [tablero + r11], ' '
     jne .check_diagonal_der
-    mov byte [array_celdas_seleccionadas + rcx], r11b
+    mov byte [array_movimientos_posibles + rcx], r11b
     inc rcx
 
 .check_diagonal_der:
@@ -71,7 +71,7 @@ cargar_movimientos_soldado:
     add r11, 8
     cmp byte [tablero + r11], ' '
     jne .finalizar
-    mov byte [array_celdas_seleccionadas + rcx], r11b
+    mov byte [array_movimientos_posibles + rcx], r11b
     inc rcx
     jmp .finalizar
 
@@ -87,7 +87,7 @@ cargar_movimientos_soldado:
     add r11, 7
     cmp byte [tablero + r11], ' '
     jne .check_diagonal_der_aspa_izq
-    mov byte [array_celdas_seleccionadas + rcx], r11b
+    mov byte [array_movimientos_posibles + rcx], r11b
     inc rcx
 
     ; Acá estamos seguros de que no estamos en la última fila de la sección
@@ -101,7 +101,7 @@ cargar_movimientos_soldado:
     add r11, 8
     cmp byte [tablero + r11], ' '
     jne .finalizar
-    mov byte [array_celdas_seleccionadas + rcx], r11b
+    mov byte [array_movimientos_posibles + rcx], r11b
     inc rcx
     jmp .finalizar
 
@@ -114,7 +114,7 @@ cargar_movimientos_soldado:
     add r11, 7
     cmp byte [tablero + r11], ' '
     jne .check_diagonal_izq_aspa_der
-    mov byte [array_celdas_seleccionadas + rcx], r11b
+    mov byte [array_movimientos_posibles + rcx], r11b
     inc rcx
 
 .check_diagonal_izq_aspa_der:
@@ -123,7 +123,7 @@ cargar_movimientos_soldado:
     add r11, 6
     cmp byte [tablero + r11], ' '
     jne .finalizar
-    mov byte [array_celdas_seleccionadas + rcx], r11b
+    mov byte [array_movimientos_posibles + rcx], r11b
     inc rcx
     jmp .finalizar
 
@@ -132,7 +132,7 @@ cargar_movimientos_soldado:
     inc r11
     cmp byte [tablero + r11], ' '
     jne .finalizar
-    mov byte [array_celdas_seleccionadas + rcx], r11b
+    mov byte [array_movimientos_posibles + rcx], r11b
     inc rcx
     jmp .finalizar
 
@@ -141,7 +141,7 @@ cargar_movimientos_soldado:
     dec r11
     cmp byte [tablero + r11], ' '
     jne .finalizar
-    mov byte [array_celdas_seleccionadas + rcx], r11b
+    mov byte [array_movimientos_posibles + rcx], r11b
     inc rcx
 
 .finalizar:
@@ -152,7 +152,7 @@ cargar_movimientos_soldado:
     mov rcx, r8 ; Movemos a rcx la cantidad de iteraciones para loop
 
 .loop_rellenar:
-    mov BYTE [array_celdas_seleccionadas + r9], 0
+    mov BYTE [array_movimientos_posibles + r9], 0
     inc r9
     loop .loop_rellenar
 

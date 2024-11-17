@@ -2,14 +2,11 @@ global main
 
 extern printf
 extern scanf
-extern getchar
 
 extern ansi_celda_seleccionada
-extern array_celdas_seleccionadas
-extern array_movimientos_soldado
+extern array_movimientos_posibles
 extern cargar_movimientos_oficial
 extern cargar_movimientos_soldado
-extern check_ganador
 extern juego_terminado
 extern seleccionar_celda
 extern seleccionar_proxima_celda
@@ -18,45 +15,47 @@ extern tablero_finalizar
 extern tablero_inicializar
 extern tablero_renderizar
 
+%macro MENSAJE_RESALTADO 1
+    db 10,0x1b,"[38;5;231;48;5;9m",%1,0x1b,"[0m",10,0
+%endmacro
+
+%macro MENSAJE_ERROR 1
+    db 10,0x1b,"[38;5;231;48;5;31m",%1,0x1b,"[0m",10,0
+%endmacro
+
 section .data
 
-mensaje_fin db 10,0x1b,"[38;5;231;48;5;9m EL JUEGO HA TERMINADO ",0x1b,"[0m",10,0
-mensaje_turno_soldado db 10,0x1b,"[38;5;231;48;5;9m TURNO DEL SOLDADO ",0x1b,"[0m",10,10,0
-mensaje_turno_oficial db 10,0x1b,"[38;5;231;48;5;9m"," TURNO DEL OFICIAL ",0x1b,"[0m",10,10,0
-mensaje_movimiento_invalido db "El movimiento ingresado es invalido.",10,0
-mensaje_ganador db "El ganador es: %lli",10,0
+mensaje_fin MENSAJE_RESALTADO " EL JUEGO HA TERMINADO "
+mensaje_turno_soldado MENSAJE_RESALTADO " TURNO DEL SOLDADO "
+mensaje_turno_oficial MENSAJE_RESALTADO " TURNO DEL OFICIAL "
+mensaje_ganador_soldados MENSAJE_RESALTADO " ¡SOLDADOS GANAN! "
+mensaje_ganador_oficiales MENSAJE_RESALTADO " ¡OFICIALES GANAN! "
+
+mensaje_err_celda_invalida MENSAJE_ERROR " CELDA INGRESADA ES INVÁLIDA - VUELVA A INGRESAR "
+mensaje_err_sin_movimientos MENSAJE_ERROR " FICHA SELECCIONADA NO TIENE MOVIMIENTOS - ELIJA OTRA FICHA "
+
 mensaje_salir_del_juego db 10,"¿Desea salir del juego? [y/N]: ",0
 mensaje_celdas_disponibles_mov db " Celdas marcadas como disponibles",10,10,0
-mensaje_ganador_soldados db 10,0x1b,"[38;5;231;48;5;9m ¡SOLDADOS GANAN! ",0x1b,"[0m",10,0
-mensaje_ganador_oficiales db 10,0x1b,"[38;5;231;48;5;9m ¡OFICIALES GANAN! ",0x1b,"[0m",10,0
 
-prompt_celda_invalida db 0x1B, "[4;31m", 0x0A, "Celda ingresada es inválida. Vuelva a ingresar.", 0x0A, 0x1B, "[0m", 0
-prompt_ficha_sin_movimientos db 0x1B, "[4;31m", 0x0A, "Ficha seleccionada no tiene movimientos. Elija otra ficha.", 0x0A, 0x1B, "[0m", 0
 input_scanf_salir_del_juego db "%c",0
-
-espacio_vacio db " ",0
 
 section .bss
 
-juego_activo resb 1 ; Bandera para saber si el juego está activo (1 = activo, 0 = terminado)
-es_turno_soldado resb 1 ; Bandera para alternar turnos (1 = soldado, 0 = oficial)
-ptr_prompt_turno resq 1
-buffer_salir_del_juego resb 1
+juego_activo resb 1 ; bandera para saber si el juego está activo (1 = activo, 0 = terminado)
+es_turno_soldado resb 1 ; bandera para alternar turnos (1 = soldado, 0 = oficial)
+
+puntero_mensaje_turno resq 1 ; permite reutilizar el codigo que imprime el letrero del turno actual
+buffer_salir_del_juego resb 1 ; guarda el valor de la respuesta a si se desea salir del juego
 
 section .text
 
 main:
     mov byte [juego_activo], 1 ; iniciamos el juego
-    ; mov byte [ganador], 0 ; inicia sin ganador
     mov byte [es_turno_soldado], 1 ; inicia con el turno del soldado
 
     call tablero_inicializar ; cargamos el estado inicial del tablero
 
-.game_loop:
-    ; comprobar si el juego está activo
-    cmp byte [juego_activo], 1
-    jne .finalizar ; si juego_activo es 0, salimos del juego
-
+.game_loop: ; inicio de un turno
     ; al inicio de cada loop no tenemos celdas seleccionadas entonces paso un
     ; puntero NULL
     ;
@@ -65,18 +64,18 @@ main:
 
     ; jugar el turno según corresponda
     cmp byte [es_turno_soldado], 1
-    jne .prompt_turno_oficial
+    jne .mensaje_turno_oficial
 
-.prompt_turno_soldado:
-    mov qword [ptr_prompt_turno], mensaje_turno_soldado
-    jmp .continue_prompt_inicio_turno
+.mensaje_turno_soldado:
+    mov qword [puntero_mensaje_turno], mensaje_turno_soldado
+    jmp .continue_mensaje_inicio_turno
 
-.prompt_turno_oficial:
-    mov qword [ptr_prompt_turno], mensaje_turno_oficial
+.mensaje_turno_oficial:
+    mov qword [puntero_mensaje_turno], mensaje_turno_oficial
 
-.continue_prompt_inicio_turno:
+.continue_mensaje_inicio_turno:
     sub rsp, 8
-    mov rdi, [ptr_prompt_turno]
+    mov rdi, [puntero_mensaje_turno]
     call printf
     add rsp, 8
 
@@ -90,11 +89,11 @@ main:
 
 .celda_invalida:
     sub rsp, 8
-    mov rdi, prompt_celda_invalida
+    mov rdi, mensaje_err_celda_invalida
     call printf
     add rsp, 8
 
-    jmp .continue_prompt_inicio_turno
+    jmp .continue_mensaje_inicio_turno
 
 .celda_valida:
     ; ya tengo rdi = rax = celda seleccionada
@@ -109,16 +108,16 @@ main:
     call cargar_movimientos_oficial
 
 .validar_ficha_tiene_movimientos:
-    cmp byte [array_celdas_seleccionadas], 0
+    cmp byte [array_movimientos_posibles], 0
     jne .seleccionar_prox_celda
 
 .ficha_no_tiene_movimientos:
     sub rsp, 8
-    mov rdi, prompt_ficha_sin_movimientos
+    mov rdi, mensaje_err_sin_movimientos
     call printf
     add rsp, 8
 
-    jmp .continue_prompt_inicio_turno
+    jmp .continue_mensaje_inicio_turno
 
 .seleccionar_prox_celda:
     ; en rax está el puntero al array de movimientos (sea cual sea), lo vamos a
@@ -129,12 +128,12 @@ main:
 
     sub rsp, 8
 
-    mov rdi, array_celdas_seleccionadas
+    mov rdi, array_movimientos_posibles
     call tablero_renderizar
 
     sub rsp, 8
 
-    mov rdi, [ptr_prompt_turno]
+    mov rdi, [puntero_mensaje_turno]
     call printf
 
     mov rdi, ansi_celda_seleccionada
