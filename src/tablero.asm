@@ -12,17 +12,20 @@ extern printf
 extern rewind
 extern scanf
 
+extern array_movimientos_posibles
+
+%define CANTIDAD_COLUMNAS 7
 %define LONGITUD_CELDA_ASCII 29
 
 section .data
 
-tablero db ' ', ' ', 'X', 'X', 'X', ' ', ' '
-        db ' ', ' ', 'X', 'X', 'X', ' ', ' '
-        db 'X', 'X', 'X', 'X', 'X', 'X', 'X'
-        db 'X', 'X', ' ', ' ', ' ', 'X', 'X'
-        db 'X', 'X', 'X', 'X', 'X', 'X', 'X'
-        db ' ', ' ', 'X', 'X', 'X', ' ', ' '
-        db ' ', ' ', 'X', 'X', 'X', ' ', ' '
+tablero db ' ', ' ', ' ', ' ', ' ', ' ', ' '
+        db ' ', ' ', ' ', ' ', ' ', ' ', ' '
+        db ' ', ' ', ' ', ' ', ' ', ' ', ' '
+        db ' ', ' ', ' ', ' ', ' ', ' ', ' '
+        db ' ', ' ', ' ', 'X', ' ', ' ', ' '
+        db ' ', ' ', ' ', 'O', ' ', ' ', ' '
+        db ' ', ' ', ' ', ' ', ' ', ' ', ' '
 
 icono_esq_vacia db "   ",0
 salto_linea db 10,0
@@ -38,41 +41,34 @@ modo_lectura_archivo_tablero db "rb",0
 
 section .bss
 
-buffer_ansi_celda resb LONGITUD_CELDA_ASCII
-buffer_input_char resb 1
-buffer_input_entero resd 1
-file_desc_archivo_tablero resq 1
+buffer_ansi_celda resb LONGITUD_CELDA_ASCII ; almacena la sequencia ANSI leída del archivo por cada celda
+file_desc_archivo_tablero resq 1 ; file descriptor archivo tablero
 
 section .text
 
-; DESCRIPCIÓN:
-;  Básicamente los colores de las celda del tablero están grabados en archivo
-;  binario que contiene las secuencias de escape ansi. Así que lo primero es
-;  abrir el archivo. La lectura del mismo se va hacer directamente en el loop de
-;  renderización.
+; carga el archivo del tablero correspondiente a la posicion de la fortaleza. no
+; lee el archivo, pues esto se hace directo en el loop de renderizacion.
+;
 tablero_inicializar:
 	mov rdi, path_archivo_tablero
 	mov rsi, modo_lectura_archivo_tablero
 	call fopen
-	mov [file_desc_archivo_tablero],rax
+	mov [file_desc_archivo_tablero], rax
 	ret
 
-; DESCRIPCIÓN:
-;  limpia la consola e imprime el tablero por pantalla, con las fichas, colores
-;  del castillo, índices para indicar filas y columnas y mostrando las celdas que
-;  están seleccionadas (por ejemplo, para mover una ficha).
+; renderiza el tablero de acuerdo al estado actual del mismo (los valores de la
+; variable tablero).
 ;
-; PARÁMETROS:
-; * rdi - puntero al arreglo de movimientos posibles absolutos o 0, si no se no
-;   hay celdas seleccionadas (por ejemplo, al inicio de cada turno).
+; parametros:
+; - rdi: 1 si se desean mostrar como seleccionadas las celdas de los movimientos
+;   posibles de una ficha, 0 en otro caso. para la primera renderización de cada
+;   turno, antes de que el jugador elija que ficha mover, esto debe valer 0.
 ;
 tablero_renderizar:
-    push rbp
     push r12
     push r13
     push r14
-
-    mov rbp, rdi
+    push r15
 
     ; limpiamos la pantalla en cada render
     mov rdi, ansi_limpiar_pantalla
@@ -96,7 +92,7 @@ tablero_renderizar:
 	call printf
 
 	inc r12
-	cmp r12,7
+	cmp r12, CANTIDAD_COLUMNAS
 	jl .loop_label_columnas
 
 .continue_label_columnas:
@@ -140,25 +136,22 @@ tablero_renderizar:
 
 .continue_renderizar_celda:
 	mov r14, r12
-	imul r14, 7
+	imul r14, CANTIDAD_COLUMNAS
 	add r14, r13 ; posición absoluta celda actual
 
 	movzx rsi, byte [tablero + r14] ; cargamos el ícono para el printf
 
-	; si el puntero pasado es NULL (0), entonces no nos importa renderizar
-	; celdas seleccionadas, renderizamos todas como deseleccionadas.
-	;
-	test rbp, rbp
-	jz .continue_celda_no_seleccionada
+	cmp r15, 0 ; no se renderizan celdas como seleccionadas
+	je .continue_celda_no_seleccionada
 
-	; buscamos la posición absoluta de la celda actual en el arreglo de
-    ; posiciones absolutas de movimientos posibles. no es lo más eficiente,
-    ; porque se está haciendo por cada celda, pero anda.
+    ; buscamos la posición absoluta de la celda actual en el arreglo de de
+    ; movimientos posibles. no es lo más eficiente, porque se está haciendo por
+    ; cada celda, pero anda.
     ;
     xor rcx, rcx
 
 .loop_celda_seleccionada:
-    mov al, byte [rbp + rcx] ; cargo el índice del arreglo de movimientos
+    mov al, byte [array_movimientos_posibles + rcx] ; cargo el índice del arreglo de movimientos
     test al, al ; llegué al final del arreglo de movimientos
     jz .continue_celda_no_seleccionada
 
@@ -182,14 +175,14 @@ tablero_renderizar:
 	call printf
 
 	inc r13
-	cmp r13, 7
+	cmp r13, CANTIDAD_COLUMNAS
 	jl .loop_columnas ; siguiente columna
 
 	mov rdi, salto_linea
 	call printf
 
 	inc r12
-	cmp r12, 7
+	cmp r12, CANTIDAD_COLUMNAS
 	jl .loop_filas ; siguiente fila
 
 .finalizar:
@@ -198,13 +191,15 @@ tablero_renderizar:
 	mov rdi, [file_desc_archivo_tablero]
 	call rewind
 
-	pop rbp
 	pop r12
 	pop r13
 	pop r14
+	pop r15
 
 	ret
 
+; cierra el archivo del tablero correspondiente a la posicion de la fortaleza
+;
 tablero_finalizar:
 	mov rdi,[file_desc_archivo_tablero]
 	call fclose

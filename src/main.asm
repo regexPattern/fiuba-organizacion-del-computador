@@ -7,6 +7,7 @@ extern ansi_celda_seleccionada
 extern array_movimientos_posibles
 extern cargar_movimientos_oficial
 extern cargar_movimientos_soldado
+extern efectuar_movimiento_soldado
 extern juego_terminado
 extern seleccionar_celda
 extern seleccionar_proxima_celda
@@ -16,28 +17,29 @@ extern tablero_inicializar
 extern tablero_renderizar
 
 %macro MENSAJE_RESALTADO 1
-    db 10,0x1b,"[38;5;231;48;5;9m",%1,0x1b,"[0m",10,0
+    db 10,0x1b,"[38;5;0;48;5;9m",%1,0x1b,"[0m",10,0
 %endmacro
 
 %macro MENSAJE_ERROR 1
-    db 10,0x1b,"[38;5;231;48;5;31m",%1,0x1b,"[0m",10,0
+    db 10,0x1b,"[38;5;0;48;5;31m",%1,0x1b,"[0m",10,0
 %endmacro
 
 section .data
 
-mensaje_fin MENSAJE_RESALTADO " EL JUEGO HA TERMINADO "
-mensaje_turno_soldado MENSAJE_RESALTADO " TURNO DEL SOLDADO "
-mensaje_turno_oficial MENSAJE_RESALTADO " TURNO DEL OFICIAL "
-mensaje_ganador_soldados MENSAJE_RESALTADO " ¡SOLDADOS GANAN! "
-mensaje_ganador_oficiales MENSAJE_RESALTADO " ¡OFICIALES GANAN! "
+mensaje_fin MENSAJE_RESALTADO " El juego ha terminado "
+mensaje_turno_soldado MENSAJE_RESALTADO " Turno del soldado "
+mensaje_turno_oficial MENSAJE_RESALTADO " Turno del oficial "
+mensaje_ganador_soldados MENSAJE_RESALTADO " ¡Soldados ganan! "
+mensaje_ganador_oficiales MENSAJE_RESALTADO " ¡Oficiales ganan! "
 
-mensaje_err_celda_invalida MENSAJE_ERROR " CELDA INGRESADA ES INVÁLIDA - VUELVA A INGRESAR "
-mensaje_err_sin_movimientos MENSAJE_ERROR " FICHA SELECCIONADA NO TIENE MOVIMIENTOS - ELIJA OTRA FICHA "
+mensaje_err_celda_invalida MENSAJE_ERROR " Celda ingresada es inválida - Vuelva a ingresar "
+mensaje_err_sin_movimientos MENSAJE_ERROR " Ficha seleccionada no tiene movimientos - Elija otra ficha "
 
 mensaje_salir_del_juego db 10,"¿Desea salir del juego? [y/N]: ",0
 mensaje_celdas_disponibles_mov db " Celdas marcadas como disponibles",10,10,0
 
-input_scanf_salir_del_juego db "%c",0
+input_salir_del_juego db "%c",0
+salto_linea db 10,0
 
 section .bss
 
@@ -47,6 +49,9 @@ es_turno_soldado resb 1 ; bandera para alternar turnos (1 = soldado, 0 = oficial
 puntero_mensaje_turno resq 1 ; permite reutilizar el codigo que imprime el letrero del turno actual
 buffer_salir_del_juego resb 1 ; guarda el valor de la respuesta a si se desea salir del juego
 
+celda_seleccionada resb 1
+prox_celda_seleccionada resb 1
+
 section .text
 
 main:
@@ -55,11 +60,7 @@ main:
 
     call tablero_inicializar ; cargamos el estado inicial del tablero
 
-.game_loop: ; inicio de un turno
-    ; al inicio de cada loop no tenemos celdas seleccionadas entonces paso un
-    ; puntero NULL
-    ;
-    mov rdi, 0
+.game_loop: ; <===== inicio de un turno
     call tablero_renderizar
 
     ; jugar el turno según corresponda
@@ -68,19 +69,22 @@ main:
 
 .mensaje_turno_soldado:
     mov qword [puntero_mensaje_turno], mensaje_turno_soldado
-    jmp .continue_mensaje_inicio_turno
+    jmp .mostrar_mensaje_inicio_turno
 
 .mensaje_turno_oficial:
     mov qword [puntero_mensaje_turno], mensaje_turno_oficial
 
-.continue_mensaje_inicio_turno:
-    sub rsp, 8
+.mostrar_mensaje_inicio_turno: ; <====== acá se regresa en caso de input inválida
     mov rdi, [puntero_mensaje_turno]
+    sub rsp, 8
     call printf
     add rsp, 8
 
+    ; se selecciona la ficha que se va a mover
 .seleccionar_celda:
     call seleccionar_celda
+
+    mov byte [celda_seleccionada], al ; guardamos la celda actual para `.efectuar_movimiento`
 
     mov rdi, rax
     call validar_celda_seleccionada ; valida = 1, invalida = 0
@@ -93,7 +97,7 @@ main:
     call printf
     add rsp, 8
 
-    jmp .continue_mensaje_inicio_turno
+    jmp .mostrar_mensaje_inicio_turno
 
 .celda_valida:
     ; ya tengo rdi = rax = celda seleccionada
@@ -108,32 +112,30 @@ main:
     call cargar_movimientos_oficial
 
 .validar_ficha_tiene_movimientos:
+    ; si el primer byte del arreglo de movimientos posibles es 0, entonces la
+    ; ficha no tiene movimientos posibles
+    ;
     cmp byte [array_movimientos_posibles], 0
     jne .seleccionar_prox_celda
 
 .ficha_no_tiene_movimientos:
-    sub rsp, 8
     mov rdi, mensaje_err_sin_movimientos
+    sub rsp, 8
     call printf
     add rsp, 8
 
-    jmp .continue_mensaje_inicio_turno
+    jmp .mostrar_mensaje_inicio_turno ; volvemos por input inválida
 
+    ; se selecciona a dónde se va a mover la ficha
 .seleccionar_prox_celda:
-    ; en rax está el puntero al array de movimientos (sea cual sea), lo vamos a
-    ; utilizar tanto para renderizar las opciones posibles como para comprobar
-    ; si la opcion ingresada es una de estas opciones.
-    ;
-    push rax
-
-    sub rsp, 8
-
-    mov rdi, array_movimientos_posibles
     call tablero_renderizar
 
     sub rsp, 8
 
     mov rdi, [puntero_mensaje_turno]
+    call printf
+
+    mov rdi, salto_linea
     call printf
 
     mov rdi, ansi_celda_seleccionada
@@ -143,19 +145,34 @@ main:
     mov rdi, mensaje_celdas_disponibles_mov
     call printf
 
-    add rsp, 16
+    add rsp, 8
 
-    pop rdi ; el valor puntero al array que guardamos ya queda listo en rdi
+    call seleccionar_proxima_celda ; <===== hasta acá se hace la selección
 
-    call seleccionar_proxima_celda
+    mov byte [prox_celda_seleccionada], al ; guardamos la celda actual para `.efectuar_movimiento`
 
-    ; TODO: falta toda la parte de efectivamente mover las piezas, eliminar los
-    ; soldados que fueron atrapados y eliminar a los oficiales que no capturaron
-    ; a los soldados.
+    mov rdi, rax
+    call validar_prox_celda_seleccionada ; valida = 1, invalida = 0
+    cmp rax, 1
+    je .efectuar_movimiento ; TODO: manejar el caso negativo, falta validar si es una de las celdas que esta en el array de movimientos posibles
 
+.efectuar_movimiento:
+    movzx rdi, byte [celda_seleccionada]
+    movzx rsi, byte [prox_celda_seleccionada]
+
+    cmp byte [es_turno_soldado], 1
+    jne .mover_oficial
+
+.mover_soldado:
+    call efectuar_movimiento_soldado
+    jmp .verificar_estado_juego
+
+.mover_oficial:
+
+    ; ya cuando efectuamos el turno:
 .verificar_estado_juego:
     call juego_terminado
-    cmp rax, 1
+    cmp rax, 1 ; 1 = juego terminado, 0 = juego no terminado
 
     ; en este momento rbx va tener 1 si el juego fue ganador por los soldados y
     ; 0 si fue ganado por los oficiales.
@@ -173,20 +190,19 @@ main:
     mov rdi, mensaje_salir_del_juego
     call printf
 
-    mov rdi, input_scanf_salir_del_juego
+    mov rdi, input_salir_del_juego
     mov rsi, buffer_salir_del_juego
     call scanf
-
-    cmp byte [buffer_salir_del_juego], "y"
-    je .finalizar
 
     add rsp, 8
 
     cmp byte [buffer_salir_del_juego], "y"
-    jne .game_loop
+    je .finalizar ; el usuario explícitamente quiere salir del juego
+
+    jmp .game_loop ; avanzamos al siguiente turno
 
 .finalizar_juego_ganado:
-    cmp rbx, 1 ; juego_terminado nos devolvio este valor
+    cmp rbx, 1 ; `juego_terminado` nos devolvió este valor
     jne .mostrar_ganador_oficiales
 
 .mostrar_ganador_soldados:
@@ -215,7 +231,13 @@ main:
     syscall
 
 ; parametros:
-; - rdi - celda seleccionada
+; - rdi: índice de la celda seleccionada
+;
+; retorna:
+; - rax: 1 si la celda seleccionada es válida. (esta validación solo implica que
+;   haya una ficha que pueda ser jugada por el turno actual en la celda
+;   seleccionada, luego se deben hacer otras validaciones de ser necesarias, por
+;   ejemplo, para ver si la ficha seleccionada tiene movimientos disponibles).
 ;
 validar_celda_seleccionada:
     cmp byte [es_turno_soldado], 1

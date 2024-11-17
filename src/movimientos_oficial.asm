@@ -5,6 +5,12 @@ extern tablero
 
 section .text
 
+; actualiza el `array_movimientos_posibles` con los índices de las celdas a las
+; que se puede mover el oficial dado
+;
+; parámetros:
+; - rdi: índice celda actual oficial
+;
 cargar_movimientos_oficial:
     ; Calculamos fila y columna
     mov rax, rdi

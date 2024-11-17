@@ -1,15 +1,16 @@
 global cargar_movimientos_soldado
+global efectuar_movimiento_soldado
 
 extern array_movimientos_posibles
 extern tablero
 
 section .text
 
-; PARÁMETROS:
-; * rdi - índice celda actual soldado
+; actualiza el `array_movimientos_posibles` con los índices de las celdas a las
+; que se puede mover el soldado dado
 ;
-; RETORNA:
-; * rax - puntero al arreglo de movimientos posibles
+; parámetros:
+; - rdi: índice celda actual soldado
 ;
 cargar_movimientos_soldado:
     ; calculamos fila y columna
@@ -146,14 +147,25 @@ cargar_movimientos_soldado:
 
 .finalizar:
     mov r8, 9
-    sub r8, rcx ; Calculamos cuántas posiciones nos faltan llenar
+    sub r8, rcx ; calculamos cuántas posiciones nos faltan llenar
 
-    mov r9, rcx ; Guardamos la posición inicial en r9
-    mov rcx, r8 ; Movemos a rcx la cantidad de iteraciones para loop
+    mov r9, rcx ; guardamos la posición inicial en r9
+    mov rcx, r8 ; movemos a rcx la cantidad de iteraciones para loop
 
 .loop_rellenar:
     mov BYTE [array_movimientos_posibles + r9], 0
     inc r9
     loop .loop_rellenar
+
+    ret
+
+; parametro:
+; - rdi: celda del soldado a mover
+; - rsi: celda a la que mover el soldado
+;
+efectuar_movimiento_soldado:
+    mov r8b, [tablero + rdi]
+    mov byte [tablero + rdi], ' '
+    mov byte [tablero + rsi], r8b
 
     ret

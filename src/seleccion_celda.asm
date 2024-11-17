@@ -5,6 +5,8 @@ global seleccionar_proxima_celda
 extern printf
 extern scanf
 
+%define CANTIDAD_COLUMNAS 7
+
 section .data
 
 ; constantes scanf
@@ -27,8 +29,8 @@ buffer_col_ingresada resb 1
 
 section .text
 
-; RETORNA:
-; * rax - índice de la casilla a mover
+; retorna:
+; - rax: índice de la casilla a mover
 ;
 seleccionar_celda:
     mov rdi, mensaje_sel_fila
@@ -45,20 +47,15 @@ seleccionar_celda:
     mov rsi, buffer_col_ingresada
     call scanf
 
-    movzx r8, byte [buffer_fila_ingresada]
-    dec r8
+    sub rsp, 8
+    call convertir_input_a_indice
+    add rsp, 8
 
-    ; convertir la columna en un número
-    movzx r9, byte [buffer_col_ingresada]
-    sub r9, "A"
-
-    ; calcular el índice absoluto de la celda seleccionada
-    imul r8, 7
-    add r8, r9
-
-    mov rax, r8
     ret
 
+; retorna:
+; - rax: índice de la casilla a la que se va a mover la ficha
+;
 seleccionar_proxima_celda:
     mov rdi, mensaje_sel_prox_fila
     call printf
@@ -73,5 +70,26 @@ seleccionar_proxima_celda:
     mov rdi, input_col
     mov rsi, buffer_col_ingresada
     call scanf
+
+    sub rsp, 8
+    call convertir_input_a_indice
+    add rsp, 8
+
+    ret
+
+; retorna:
+; - rax: índice de la casilla ingresada
+;
+convertir_input_a_indice:
+    movzx rax, byte [buffer_fila_ingresada]
+    dec rax
+
+    ; convertir la columna en un número
+    movzx r8, byte [buffer_col_ingresada]
+    sub r8, "A"
+
+    ; calcular el índice absoluto de la celda seleccionada
+    imul rax, CANTIDAD_COLUMNAS
+    add rax, r8
 
     ret

@@ -37,8 +37,13 @@ section .text
 ; oficiales. solo tiene sentido en caso de que rax sea 1.
 ;
 juego_terminado:
-    ; revisar si los soldados ocupan todos los puntos del interior de la
-    ; fortaleza.
+    ; el valor por defecto es que no ha termino, a menos que encontremos una
+    ; condición que nos diga que si finalizó, devolvemos esto
+    ;
+    mov rax, 0
+
+    ; primero revisamos si los soldados ocupan todos los puntos del interior de
+    ; la fortaleza.
     ;
 .verificar_soldados_en_fortaleza:
     mov r8, 4
@@ -63,11 +68,10 @@ juego_terminado:
     jl .loop_filas_fortaleza
 
 .todos_son_soldados:
-    mov rax, 0
+    mov rax, 1
     jmp .finalizar
 
 .hay_uno_que_no_es_soldado:
-    mov rax, 1
 
 .finalizar:
     ret
