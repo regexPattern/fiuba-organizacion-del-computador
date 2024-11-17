@@ -34,7 +34,7 @@
     ; retorna:
     ; - rax: 1 si el juego está terminado, 0 en otro caso.
     ; - rbx: 1 si el juego fue ganado por los soldados, 0 si fue ganado por los
-    ; oficiales. solo tiene sentido en caso de que rax sea 1.
+    ;   oficiales. solo tiene sentido en caso de que rax sea 1.
     ;
 juego_terminado:
     ; el valor por defecto es que no ha termino, a menos que encontremos una

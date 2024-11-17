@@ -23,7 +23,7 @@
                 db ' ', ' ', 'X', 'X', 'X', ' ', ' '
                 db 'X', 'X', 'X', 'X', 'X', 'X', 'X'
                 db 'X', 'X', ' ', ' ', ' ', 'X', 'X'
-                db 'X', 'X', ' ', ' ', ' ', 'X', 'X'
+                db 'X', 'X', ' ', ' ', 'X', 'X', 'X'
                 db ' ', ' ', ' ', ' ', 'O', ' ', ' '
                 db ' ', ' ', 'O', ' ', ' ', ' ', ' '
 
@@ -139,7 +139,7 @@ tablero_renderizar:
         .continue_renderizar_celda:
         mov r14, r12
         imul r14, CANTIDAD_COLUMNAS
-        add r14, r13 ; posición absoluta celda actual
+        add r14, r13 ; índice celda actual
 
         movzx rsi, byte [tablero + r14] ; cargamos el ícono para el printf
 

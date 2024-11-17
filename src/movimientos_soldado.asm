@@ -10,7 +10,9 @@
     ; que se puede mover el soldado dado
     ;
     ; parámetros:
-    ; - rdi: índice celda actual soldado
+    ; - rdi: índice de la celda actual soldado
+    ;
+    ; * el parámetro se asume como ya validado
     ;
 cargar_movimientos_soldado:
     ; calculamos fila y columna
@@ -24,21 +26,21 @@ cargar_movimientos_soldado:
 
     xor rcx, rcx ; rcx = índice del array
 
-    ; Primero verificamos si estamos en las aspas
+    ; primero verificamos si estamos en las aspas
     cmp r9, 1
     jle .aspa_izquierda
     cmp r9, 5
     jge .aspa_derecha
 
-    ; Si no estamos en las aspas, verificamos movimientos normales
+    ; si no estamos en las aspas, verificamos movimientos normales
 
     .check_verticales:
-    ; Verificar movimiento vertical
+    ; verificar movimiento vertical
     mov r11, rdi
     add r11, 7
 
-    ; Verificar si ya estamos en el fondo del castillo (nos salimos del tablero
-    ; si avanzamos a la siguiente fila)
+    ; verificar si ya estamos en el fondo de la fortaleza (nos salimos del tablero
+    ; si avanzamos a la siguiente fila).
     ;
     cmp r11, 48
     jg .finalizar
@@ -48,8 +50,8 @@ cargar_movimientos_soldado:
     inc rcx
 
     .check_diagonal_izq:
-    ; Verificar diagonal izquierda
-    ; Si estamos en la columna 2 y nos movemos a la izquierda, nos estaríamos
+    ; verificar diagonal izquierda
+    ; si estamos en la columna 2 y nos movemos a la izquierda, nos estaríamos
     ; saliendo del tablero
     ;
     cmp r9, 2
@@ -62,8 +64,8 @@ cargar_movimientos_soldado:
     inc rcx
 
     .check_diagonal_der:
-    ; Verificar diagonal derecha
-    ; Si estamos en la columna 4 y nos movemos a la izquierda, nos estaríamos
+    ; verificar diagonal derecha
+    ; si estamos en la columna 4 y nos movemos a la izquierda, nos estaríamos
     ; saliendo del tablero
     ;
     cmp r9, 4
@@ -77,11 +79,11 @@ cargar_movimientos_soldado:
     jmp .finalizar
 
     .aspa_izquierda:
-    ; Si estamos en la última fila
+    ; si estamos en la última fila
     cmp r8, 4
     je .agregar_mov_derecha
 
-    ; No estamos en la última fila del aspa, por lo que al movernos hacia
+    ; no estamos en la última fila del aspa, por lo que al movernos hacia
     ; adelante no nos saldríamos del tablero
     ;
     mov r11, rdi
@@ -91,13 +93,13 @@ cargar_movimientos_soldado:
     mov byte [array_movimientos_posibles + rcx], r11b
     inc rcx
 
-    ; Acá estamos seguros de que no estamos en la última fila de la sección
+    ; acá estamos seguros de que no estamos en la última fila de la sección
     ; horizontal de la cruz, por lo que, estando en el aspa izquierda, cualquier
     ; movimiento diagonal a la derecha es válido a menos que esté ocupada esa
     ; casilla
     ;
     .check_diagonal_der_aspa_izq:
-    ; Solo diagonal derecha
+    ; solo diagonal derecha
     mov r11, rdi
     add r11, 8
     cmp byte [tablero + r11], ' '
@@ -107,7 +109,7 @@ cargar_movimientos_soldado:
     jmp .finalizar
 
     .aspa_derecha:
-    ; Si estamos en la última fila
+    ; si estamos en la última fila
     cmp r8, 4
     je .agregar_mov_izquierda
 
@@ -119,7 +121,7 @@ cargar_movimientos_soldado:
     inc rcx
 
     .check_diagonal_izq_aspa_der:
-    ; Solo diagonal izquierda
+    ; solo diagonal izquierda
     mov r11, rdi
     add r11, 6
     cmp byte [tablero + r11], ' '
@@ -159,9 +161,13 @@ cargar_movimientos_soldado:
 
     ret
 
+    ; mueve a un soldado de lugar
+    ;
     ; parámetro:
     ; - rdi: celda del soldado a mover
     ; - rsi: celda a la que mover el soldado
+    ;
+    ; * ambos parámetros se asumen como ya validados
     ;
 efectuar_movimiento_soldado:
     mov r8b, [tablero + rdi]

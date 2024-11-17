@@ -18,11 +18,11 @@
     extern tablero_renderizar
 
     %macro MENSAJE_RESALTADO 1
-    db 10,0x1b,"[38;5;0;48;5;9m",%1,0x1b,"[0m",10,0
+    db 10,0x1b,"[38;5;231;48;5;9m",%1,0x1b,"[0m",10,0
     %endmacro
 
     %macro MENSAJE_ERROR 1
-    db 10,0x1b,"[38;5;0;48;5;31m",%1,0x1b,"[0m",10,0
+    db 10,0x1b,"[38;5;231;48;5;31m",%1,0x1b,"[0m",10,0
     %endmacro
 
     section .data
@@ -42,6 +42,8 @@
     input_salir_del_juego db "%c",0
     salto_linea db 10,0
 
+    ; es_turno_soldado db 1
+
     section .bss
 
     juego_activo resb 1 ; bandera para saber si el juego está activo (1 = activo, 0 = terminado)
@@ -57,7 +59,7 @@
 
 main:
     mov byte [juego_activo], 1 ; iniciamos el juego
-    mov byte [es_turno_soldado], 1 ; inicia con el turno del soldado
+    mov byte [es_turno_soldado], 0 ; inicia con el turno del soldado
 
     call tablero_inicializar ; cargamos el estado inicial del tablero
 
@@ -171,15 +173,15 @@ main:
     jmp .verificar_estado_juego
 
     .mover_oficial:
-    call efectuar_movimiento_oficial
+    ; call efectuar_movimiento_oficial
 
     ; ya cuando efectuamos el turno:
     .verificar_estado_juego:
     call juego_terminado
     cmp rax, 1 ; 1 = juego terminado, 0 = juego no terminado
 
-    ; en este momento rbx va tener 1 si el juego fue ganador por los soldados y
-    ; 0 si fue ganado por los oficiales.
+    ; TODO: en este momento rbx va tener 1 si el juego fue ganador por los
+    ; soldados y 0 si fue ganado por los oficiales.
     ;
     je .finalizar_juego_ganado
 
