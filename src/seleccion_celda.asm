@@ -1,37 +1,37 @@
-global array_movimientos_posibles
-global seleccionar_celda
-global seleccionar_proxima_celda
+    global array_movimientos_posibles
+    global seleccionar_celda
+    global seleccionar_proxima_celda
 
-extern printf
-extern scanf
+    extern printf
+    extern scanf
 
-%define CANTIDAD_COLUMNAS 7
+    %define CANTIDAD_COLUMNAS 7
 
-section .data
+    section .data
 
-; constantes scanf
-mensaje_sel_fila db 10," - Ingresa la fila [1-9]: ",0
-mensaje_sel_col db " - Ingrese la columna [A-G]: ",0
-input_fila db "%i",0
-input_col db " %c",0
+    ; constantes scanf
+    mensaje_sel_fila db 10," - Ingresa la fila [1-9]: ",0
+    mensaje_sel_col db " - Ingrese la columna [A-G]: ",0
+    input_fila db "%i",0
+    input_col db " %c",0
 
-mensaje_sel_prox_fila db " - Ingresa la fila a la que moverse [1-9]: ",0
-mensaje_sel_prox_col db " - Ingrese la columna a la que moverse [A-G]: ",0
+    mensaje_sel_prox_fila db " - Ingresa la fila a la que moverse [1-9]: ",0
+    mensaje_sel_prox_col db " - Ingrese la columna a la que moverse [A-G]: ",0
 
-section .bss
+    section .bss
 
-array_movimientos_posibles resb 9
-buffer_movimiento_ingresado resb 1
-es_movimiento_valido resb 1 ; (0 = invalido, 1 = valido)
+    array_movimientos_posibles resb 9
+    buffer_movimiento_ingresado resb 1
+    es_movimiento_valido resb 1 ; (0 = invalido, 1 = valido)
 
-buffer_fila_ingresada resb 1
-buffer_col_ingresada resb 1
+    buffer_fila_ingresada resb 1
+    buffer_col_ingresada resb 1
 
-section .text
+    section .text
 
-; retorna:
-; - rax: índice de la casilla a mover
-;
+    ; retorna:
+    ; - rax: índice de la casilla a mover
+    ;
 seleccionar_celda:
     mov rdi, mensaje_sel_fila
     call printf
@@ -53,9 +53,9 @@ seleccionar_celda:
 
     ret
 
-; retorna:
-; - rax: índice de la casilla a la que se va a mover la ficha
-;
+    ; retorna:
+    ; - rax: índice de la casilla a la que se va a mover la ficha
+    ;
 seleccionar_proxima_celda:
     mov rdi, mensaje_sel_prox_fila
     call printf
@@ -77,9 +77,9 @@ seleccionar_proxima_celda:
 
     ret
 
-; retorna:
-; - rax: índice de la casilla ingresada
-;
+    ; retorna:
+    ; - rax: índice de la casilla ingresada
+    ;
 convertir_input_a_indice:
     movzx rax, byte [buffer_fila_ingresada]
     dec rax

@@ -1,16 +1,17 @@
-global cargar_movimientos_oficial
+    global cargar_movimientos_oficial
+    global efectuar_movimiento_oficial
 
-extern array_movimientos_posibles
-extern tablero
+    extern array_movimientos_posibles
+    extern tablero
 
-section .text
+    section .text
 
-; actualiza el `array_movimientos_posibles` con los índices de las celdas a las
-; que se puede mover el oficial dado
-;
-; parámetros:
-; - rdi: índice celda actual oficial
-;
+    ; actualiza el `array_movimientos_posibles` con los índices de las celdas a las
+    ; que se puede mover el oficial dado
+    ;
+    ; parámetros:
+    ; - rdi: índice celda actual oficial
+    ;
 cargar_movimientos_oficial:
     ; Calculamos fila y columna
     mov rax, rdi
@@ -23,7 +24,7 @@ cargar_movimientos_oficial:
 
     xor rcx, rcx ; rcx = índice del array
 
-.check_limites_arriba:
+    .check_limites_arriba:
     ; Si estamos en una columa entre la 2 y la 4 (inclusive) significa que no
     ; estamos en las aspas, por lo tanto, el único límite que nos importa es el
     ; límite superior de todo el tablero.
@@ -36,7 +37,7 @@ cargar_movimientos_oficial:
     ; En el caso de estar en las aspas, el límite superior que nos importa es el
     ; de las aspas.
     ;
-.check_normal_arriba_aspa_lateral:
+    .check_normal_arriba_aspa_lateral:
     ; Si estamos en las aspas laterales, no permitimos ningun movimiento hacia
     ; arriba en la primera fila.
     ;
@@ -48,12 +49,12 @@ cargar_movimientos_oficial:
     cmp rax, 3
     je .check_normal_arriba
 
-.check_captura_arriba:
+    .check_captura_arriba:
     ; Verificar si hay un soldado directamente arriba
     mov r11, rdi
     sub r11, 7
 
-    cmp BYTE [tablero + r11], 'X'
+    cmp byte [tablero + r11], 'X'
     jne .check_normal_arriba
 
     ; Para captura, verificar la siguiente posición
@@ -74,7 +75,7 @@ cargar_movimientos_oficial:
     ; puedo hacer un movimiento normal hacia arriba, porque significa que la
     ; celda de arriba está ocupada por un soldado.
 
-.check_normal_arriba:
+    .check_normal_arriba:
     ; Verificar si la casilla de arriba está vacía
     mov r11, rdi
     sub r11, 7
@@ -84,18 +85,29 @@ cargar_movimientos_oficial:
     mov byte [array_movimientos_posibles + rcx], r11b
     inc rcx
 
-.check_limites_abajo:
+    .check_limites_abajo:
 
-.finalizar:
+    .finalizar:
     mov r8, 9
     sub r8, rcx ; Calculamos cuántas posiciones nos faltan llenar
 
     mov r9, rcx ; Guardamos la posición inicial en r9
     mov rcx, r8 ; Movemos a rcx la cantidad de iteraciones para loop
 
-.loop_rellenar:
-    mov BYTE [array_movimientos_posibles + r9], 0
+    .loop_rellenar:
+    mov byte [array_movimientos_posibles + r9], 0
     inc r9
     loop .loop_rellenar
+
+    ret
+
+    ; parámetros:
+    ; - rdi: celda del soldado a mover
+    ; - rsi: celda a la que mover el soldado
+    ;
+efectuar_movimiento_oficial:
+    mov r8b, [tablero + rdi]
+    mov byte [tablero + rdi], ' '
+    mov byte [tablero + rsi], r8b
 
     ret

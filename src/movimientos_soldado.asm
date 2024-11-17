@@ -1,17 +1,17 @@
-global cargar_movimientos_soldado
-global efectuar_movimiento_soldado
+    global cargar_movimientos_soldado
+    global efectuar_movimiento_soldado
 
-extern array_movimientos_posibles
-extern tablero
+    extern array_movimientos_posibles
+    extern tablero
 
-section .text
+    section .text
 
-; actualiza el `array_movimientos_posibles` con los índices de las celdas a las
-; que se puede mover el soldado dado
-;
-; parámetros:
-; - rdi: índice celda actual soldado
-;
+    ; actualiza el `array_movimientos_posibles` con los índices de las celdas a las
+    ; que se puede mover el soldado dado
+    ;
+    ; parámetros:
+    ; - rdi: índice celda actual soldado
+    ;
 cargar_movimientos_soldado:
     ; calculamos fila y columna
     mov rax, rdi
@@ -32,7 +32,7 @@ cargar_movimientos_soldado:
 
     ; Si no estamos en las aspas, verificamos movimientos normales
 
-.check_verticales:
+    .check_verticales:
     ; Verificar movimiento vertical
     mov r11, rdi
     add r11, 7
@@ -47,7 +47,7 @@ cargar_movimientos_soldado:
     mov byte [array_movimientos_posibles + rcx], r11b
     inc rcx
 
-.check_diagonal_izq:
+    .check_diagonal_izq:
     ; Verificar diagonal izquierda
     ; Si estamos en la columna 2 y nos movemos a la izquierda, nos estaríamos
     ; saliendo del tablero
@@ -61,7 +61,7 @@ cargar_movimientos_soldado:
     mov byte [array_movimientos_posibles + rcx], r11b
     inc rcx
 
-.check_diagonal_der:
+    .check_diagonal_der:
     ; Verificar diagonal derecha
     ; Si estamos en la columna 4 y nos movemos a la izquierda, nos estaríamos
     ; saliendo del tablero
@@ -76,7 +76,7 @@ cargar_movimientos_soldado:
     inc rcx
     jmp .finalizar
 
-.aspa_izquierda:
+    .aspa_izquierda:
     ; Si estamos en la última fila
     cmp r8, 4
     je .agregar_mov_derecha
@@ -96,7 +96,7 @@ cargar_movimientos_soldado:
     ; movimiento diagonal a la derecha es válido a menos que esté ocupada esa
     ; casilla
     ;
-.check_diagonal_der_aspa_izq:
+    .check_diagonal_der_aspa_izq:
     ; Solo diagonal derecha
     mov r11, rdi
     add r11, 8
@@ -106,7 +106,7 @@ cargar_movimientos_soldado:
     inc rcx
     jmp .finalizar
 
-.aspa_derecha:
+    .aspa_derecha:
     ; Si estamos en la última fila
     cmp r8, 4
     je .agregar_mov_izquierda
@@ -118,7 +118,7 @@ cargar_movimientos_soldado:
     mov byte [array_movimientos_posibles + rcx], r11b
     inc rcx
 
-.check_diagonal_izq_aspa_der:
+    .check_diagonal_izq_aspa_der:
     ; Solo diagonal izquierda
     mov r11, rdi
     add r11, 6
@@ -128,7 +128,7 @@ cargar_movimientos_soldado:
     inc rcx
     jmp .finalizar
 
-.agregar_mov_derecha:
+    .agregar_mov_derecha:
     mov r11, rdi
     inc r11
     cmp byte [tablero + r11], ' '
@@ -137,7 +137,7 @@ cargar_movimientos_soldado:
     inc rcx
     jmp .finalizar
 
-.agregar_mov_izquierda:
+    .agregar_mov_izquierda:
     mov r11, rdi
     dec r11
     cmp byte [tablero + r11], ' '
@@ -145,24 +145,24 @@ cargar_movimientos_soldado:
     mov byte [array_movimientos_posibles + rcx], r11b
     inc rcx
 
-.finalizar:
+    .finalizar:
     mov r8, 9
     sub r8, rcx ; calculamos cuántas posiciones nos faltan llenar
 
     mov r9, rcx ; guardamos la posición inicial en r9
     mov rcx, r8 ; movemos a rcx la cantidad de iteraciones para loop
 
-.loop_rellenar:
-    mov BYTE [array_movimientos_posibles + r9], 0
+    .loop_rellenar:
+    mov byte [array_movimientos_posibles + r9], 0
     inc r9
     loop .loop_rellenar
 
     ret
 
-; parametro:
-; - rdi: celda del soldado a mover
-; - rsi: celda a la que mover el soldado
-;
+    ; parámetro:
+    ; - rdi: celda del soldado a mover
+    ; - rsi: celda a la que mover el soldado
+    ;
 efectuar_movimiento_soldado:
     mov r8b, [tablero + rdi]
     mov byte [tablero + rdi], ' '
