@@ -12,11 +12,13 @@
     ; constantes scanf
     mensaje_sel_fila db 10," - Ingresa la fila [1-9]: ",0
     mensaje_sel_col db " - Ingrese la columna [A-G]: ",0
+
+    mensaje_celdas_disponibles db 10,0x1b,"[48;5;33m   ",0x1b,"[0m"," Celdas marcadas como disponibles",10,0
+    mensaje_sel_prox_fila db 10," - Ingresa la fila a la que moverse [1-9]: ",0
+    mensaje_sel_prox_col db " - Ingrese la columna a la que moverse [A-G]: ",0
+
     input_fila db "%i",0
     input_col db " %c",0
-
-    mensaje_sel_prox_fila db " - Ingresa la fila a la que moverse [1-9]: ",0
-    mensaje_sel_prox_col db " - Ingrese la columna a la que moverse [A-G]: ",0
 
     section .bss
 
@@ -57,6 +59,9 @@ seleccionar_celda:
     ; - rax: índice de la casilla a la que se va a mover la ficha
     ;
 seleccionar_proxima_celda:
+    mov rdi, mensaje_celdas_disponibles
+    call printf
+
     mov rdi, mensaje_sel_prox_fila
     call printf
 
