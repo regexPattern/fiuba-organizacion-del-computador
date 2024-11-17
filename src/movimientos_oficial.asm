@@ -208,7 +208,7 @@ efectuar_movimiento_oficial:
     jmp .finalizar
 
     .efectuar_captura:
-    mov rbx, rsi ; celda actual
+    mov rbx, rsi
     sub rbx, rdi ; celda anterior
     sar rbx, 1 ; dividimos entre 2 para encontrar la celda sobre la que saltamos
 

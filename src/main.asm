@@ -187,8 +187,8 @@ main:
 
     .continuar_juego:
     ; cambiar de turno y continuar el juego
-    mov al, [es_turno_soldado]
-    not al
+    mov al, byte [es_turno_soldado]
+    xor al, 1
     mov [es_turno_soldado], al
 
     sub rsp, 8

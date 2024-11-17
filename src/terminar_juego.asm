@@ -23,7 +23,7 @@
     CANT_COL	dq	7
     LONG_ELEM   dq  1
     indice dq	27
-    es_turno_soldado db 1
+    ; es_turno_soldado db 1
 
     section .bss
 
@@ -77,10 +77,10 @@ juego_terminado:
     ret
 
 check_ganador:
-    mov rdi, [es_turno_soldado]
-    mov rsi, tablero
-    call encontrar_ganador
-    mov [ganador], rax
+    ; mov rdi, [es_turno_soldado]
+    ; mov rsi, tablero
+    ; call encontrar_ganador
+    ; mov [ganador], rax
     ret
 
     ; Retorna en RAX al ganador (si lo hay).
