@@ -27,6 +27,3 @@ debug: $(EJECUTABLE)
 
 compilar-tableros:
 	@./$(SCRIPT_COMPILACION_TABLEROS)
-
-help-opcodes:
-	@cat /usr/include/x86_64-linux-gnu/asm/unistd_64.h
