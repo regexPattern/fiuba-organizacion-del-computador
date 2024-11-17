@@ -1,3 +1,4 @@
+global ansi_celda_seleccionada
 global tablero
 global tablero_finalizar
 global tablero_inicializar
@@ -19,9 +20,9 @@ tablero db ' ', ' ', 'X', 'X', 'X', ' ', ' '
         db ' ', ' ', 'X', 'X', 'X', ' ', ' '
         db 'X', 'X', 'X', 'X', 'X', 'X', 'X'
         db 'X', 'X', ' ', ' ', ' ', 'X', 'X'
-        db 'X', 'X', ' ', ' ', ' ', 'X', 'X'
-        db ' ', ' ', ' ', ' ', 'O', ' ', ' '
-        db ' ', ' ', 'O', ' ', ' ', ' ', ' '
+        db 'X', 'X', 'X', 'X', 'X', 'X', 'X'
+        db ' ', ' ', 'X', 'X', 'X', ' ', ' '
+        db ' ', ' ', 'X', 'X', 'X', ' ', ' '
 
 icono_esq_vacia db "   ",0
 salto_linea db 10,0
@@ -74,8 +75,8 @@ tablero_renderizar:
     mov rbp, rdi
 
     ; limpiamos la pantalla en cada render
-    ; mov rdi, ansi_limpiar_pantalla
-    ; call printf
+    mov rdi, ansi_limpiar_pantalla
+    call printf
 
     ; agregamos el espacio para la esquina de la fila y columna donde se
     ; muestran las labels de las casillas.
@@ -142,7 +143,7 @@ tablero_renderizar:
 	imul r14, 7
 	add r14, r13 ; posición absoluta celda actual
 
-	movzx rsi,byte [tablero + r14] ; cargamos el ícono para el printf
+	movzx rsi, byte [tablero + r14] ; cargamos el ícono para el printf
 
 	; si el puntero pasado es NULL (0), entonces no nos importa renderizar
 	; celdas seleccionadas, renderizamos todas como deseleccionadas.
@@ -175,6 +176,9 @@ tablero_renderizar:
 	mov rdi, buffer_ansi_celda
 
 .renderizar_celda:
+    ; acabo de cargar rdi y recordemos que rsi lo cargue en
+    ; .continue_renderizar_celda
+    ;
 	call printf
 
 	inc r13

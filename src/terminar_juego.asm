@@ -1,4 +1,5 @@
 global check_ganador
+global juego_terminado
 
 extern printf
 
@@ -29,6 +30,47 @@ section .bss
 ganador resq 1 ; (0 = sin ganador, 1 = soldados, 2 = oficiales)
 
 section .text
+
+; retorna:
+; - rax: 1 si el juego está terminado, 0 en otro caso.
+; - rbx: 1 si el juego fue ganado por los soldados, 0 si fue ganado por los
+; oficiales. solo tiene sentido en caso de que rax sea 1.
+;
+juego_terminado:
+    ; revisar si los soldados ocupan todos los puntos del interior de la
+    ; fortaleza.
+    ;
+.verificar_soldados_en_fortaleza:
+    mov r8, 4
+
+.loop_filas_fortaleza:
+    mov r9, 3
+
+.loop_columnas_fortaleza:
+    mov r10, r8
+    imul r10, 7
+    add r10, r9
+
+    cmp byte [tablero + r10], 'X'
+    jne .hay_uno_que_no_es_soldado
+
+    inc r9
+    cmp r9, 6
+    jl .loop_columnas_fortaleza
+
+    inc r8
+    cmp r8, 7
+    jl .loop_filas_fortaleza
+
+.todos_son_soldados:
+    mov rax, 0
+    jmp .finalizar
+
+.hay_uno_que_no_es_soldado:
+    mov rax, 1
+
+.finalizar:
+    ret
 
 check_ganador:
     mov rdi, [es_turno_soldado]

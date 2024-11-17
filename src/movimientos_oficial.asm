@@ -1,13 +1,7 @@
 global cargar_movimientos_oficial
-global array_movimientos_oficial
 
+extern array_celdas_seleccionadas
 extern tablero
-
-%define MAX_MOVIMIENTOS_POSIBLES 9
-
-section .bss
-
-array_movimientos_oficial resb MAX_MOVIMIENTOS_POSIBLES
 
 section .text
 
@@ -64,10 +58,10 @@ cargar_movimientos_oficial:
     jl .check_limites_abajo
 
     ; Verificar que la posición de salto esta vacía
-    cmp BYTE [tablero + r11], ' '
+    cmp byte [tablero + r11], ' '
     jne .check_limites_abajo
 
-    mov BYTE [array_movimientos_oficial + rcx], -14
+    mov byte [array_celdas_seleccionadas + rcx], r11b
     inc rcx
 
     ; Si puedo hacer un movimiento de captura hacia arriba, automáticamente no
@@ -79,22 +73,22 @@ cargar_movimientos_oficial:
     mov r11, rdi
     sub r11, 7
 
-    cmp BYTE [tablero + r11], ' '
+    cmp byte [tablero + r11], ' '
     jne .check_limites_abajo
-    mov BYTE [array_movimientos_oficial + rcx], -7
+    mov byte [array_celdas_seleccionadas + rcx], r11b
     inc rcx
 
 .check_limites_abajo:
 
 .finalizar:
-    mov r8, MAX_MOVIMIENTOS_POSIBLES
+    mov r8, 9
     sub r8, rcx ; Calculamos cuántas posiciones nos faltan llenar
 
     mov r9, rcx ; Guardamos la posición inicial en r9
     mov rcx, r8 ; Movemos a rcx la cantidad de iteraciones para loop
 
 .loop_rellenar:
-    mov BYTE [array_movimientos_oficial + r9], 0
+    mov BYTE [array_celdas_seleccionadas + r9], 0
     inc r9
     loop .loop_rellenar
 
