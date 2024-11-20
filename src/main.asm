@@ -18,6 +18,7 @@
     extern tablero_inicializar
     extern tablero_renderizar
     extern tablero_actualizar
+    extern encontrar_ganador
 
     %macro MENSAJE_RESALTADO 1
     db 10,0x1b,"[38;5;231;48;5;9m",%1,0x1b,"[0m",10,0
@@ -69,6 +70,8 @@ main:
     ; renderizamos el tablero sin selecciones
     mov rdi, 0
     call tablero_renderizar
+
+    call encontrar_ganador
 
     .inicio_ejecucion_turno: ; <====== acá se regresa en caso de input inválida
     call mostrar_mensaje_turno
