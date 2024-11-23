@@ -173,13 +173,13 @@ chequear_si_ganan_oficiales:
     inc     r13
     cmp     r13, 49
     jl      .loopTablero
+    cmp     r14, 8
+    jle     ganaron_oficiales
     xor     rax, rax
     ret
 
     .contabilizar_soldado:
     inc     r14
-    cmp     r14, 8
-    jle     ganaron_oficiales
     jmp     .seguir_buscando
 
 ganaron_oficiales:
