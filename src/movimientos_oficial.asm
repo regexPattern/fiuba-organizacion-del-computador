@@ -26,81 +26,274 @@ cargar_movimientos_oficial:
 
     xor rcx, rcx ; rcx = índice del array
 
+    ; -------------------------------------------
+    ; Movimientos hacia arriba
     .check_limites_arriba:
-    ; si estamos en una columa entre la 2 y la 4 (inclusive) significa que no
-    ; estamos en las aspas, por lo tanto, el único límite que nos importa es el
-    ; límite superior de todo el tablero.
-    ;
-    cmp r9, 2
-    jl .check_captura_arriba
-    cmp r9, 4
-    jle .check_captura_arriba
+        ; Si estamos en una columna entre la 2 y la 4 (inclusive), el único límite
+        ; que nos importa es el límite superior del tablero.
+        cmp r9, 2
+        jl .check_captura_arriba
+        cmp r9, 4
+        jle .check_captura_arriba
 
-    ; en el caso de estar en las aspas, el límite superior que nos importa es el
-    ; de las aspas.
-    ;
-    .check_normal_arriba_aspa_lateral:
-    ; Si estamos en las aspas laterales, no permitimos ningun movimiento hacia
-    ; arriba en la primera fila.
-    ;
-    cmp rax, 2
-    je .check_limites_abajo
+        ; Si estamos en las aspas laterales, no permitimos movimientos hacia arriba
+        cmp rax, 2
+        je .check_limites_abajo
+        cmp rax, 3
+        je .check_normal_arriba
 
-    ; a su vez, si estamos en la segunda fila de las aspas no permitimos
-    ; movimientos de captura hacia arriba.
-    ;
-    cmp rax, 3
-    je .check_normal_arriba
+        .check_captura_arriba:
+        ; Verificar si hay un soldado directamente arriba
+        mov r11, rdi
+        sub r11, 7
 
-    .check_captura_arriba:
-    ; verificar si hay un soldado directamente arriba
-    mov r11, rdi
-    sub r11, 7
+        cmp byte [tablero + r11], 'X'
+        jne .check_normal_arriba
 
-    cmp byte [tablero + r11], 'X'
-    jne .check_normal_arriba
+        ; Para captura, verificar la posición después del salto
+        sub r11, 7
+        cmp r11, 0
+        jl .check_limites_abajo
+        cmp byte [tablero + r11], ' '
+        jne .check_limites_abajo
 
-    ; para captura, verificar la siguiente posición
-    sub r11, 7 ; r11 ahora tiene la posición después del salto sobre el oficial
+        mov byte [array_movimientos_posibles + rcx], r11b
+        inc rcx
 
-    ; verificar que no nos salimos del tablero
-    cmp r11, 0
-    jl .check_limites_abajo
+        .check_normal_arriba:
+        ; Verificar si la casilla de arriba está vacía
+        mov r11, rdi
+        sub r11, 7
 
-    ; verificar que la posición de salto esta vacía
-    cmp byte [tablero + r11], ' '
-    jne .check_limites_abajo
+        cmp byte [tablero + r11], ' '
+        jne .check_limites_abajo
+        mov byte [array_movimientos_posibles + rcx], r11b
+        inc rcx
 
-    mov byte [array_movimientos_posibles + rcx], r11b
-    inc rcx
-
-    ; si puedo hacer un movimiento de captura hacia arriba, automáticamente no
-    ; puedo hacer un movimiento normal hacia arriba, porque significa que la
-    ; celda de arriba está ocupada por un soldado.
-
-    .check_normal_arriba:
-    ; verificar si la casilla de arriba está vacía
-    mov r11, rdi
-    sub r11, 7
-
-    cmp byte [tablero + r11], ' '
-    jne .check_limites_abajo
-    mov byte [array_movimientos_posibles + rcx], r11b
-    inc rcx
-
+    ; -------------------------------------------
+    ; Movimientos hacia abajo
     .check_limites_abajo:
+        mov r11, rdi
+        add r11, 7
 
+        cmp r11, 49 ; Límite inferior
+        jge .check_limites_izquierda
+
+        cmp byte [tablero + r11], 'X'
+        jne .check_normal_abajo
+
+        add r11, 7
+        cmp r11, 49
+        jge .check_limites_izquierda
+        cmp byte [tablero + r11], ' '
+        jne .check_limites_izquierda
+
+        mov byte [array_movimientos_posibles + rcx], r11b
+        inc rcx
+
+        .check_normal_abajo:
+        mov r11, rdi
+        add r11, 7
+        cmp byte [tablero + r11], ' '
+        jne .check_limites_izquierda
+        mov byte [array_movimientos_posibles + rcx], r11b
+        inc rcx
+
+    ; -------------------------------------------
+    ; Movimientos hacia la izquierda
+    .check_limites_izquierda:
+        mov r11, rdi
+        dec r11
+
+        cmp r9, 0 ; Columna 0 es el límite izquierdo
+        jl .check_limites_derecha
+
+        cmp byte [tablero + r11], 'X'
+        jne .check_normal_izquierda
+
+        dec r11
+        cmp r9, 1
+        jl .check_limites_derecha
+        cmp byte [tablero + r11], ' '
+        jne .check_limites_derecha
+
+        mov byte [array_movimientos_posibles + rcx], r11b
+        inc rcx
+
+        .check_normal_izquierda:
+        mov r11, rdi
+        dec r11
+        cmp byte [tablero + r11], ' '
+        jne .check_limites_derecha
+        mov byte [array_movimientos_posibles + rcx], r11b
+        inc rcx
+
+    ; -------------------------------------------
+    ; Movimientos hacia la derecha
+    .check_limites_derecha:
+        mov r11, rdi
+        inc r11
+
+        cmp r9, 6 ; Columna 6 es el límite derecho
+        jg .check_diagonales_superiores
+
+        cmp byte [tablero + r11], 'X'
+        jne .check_normal_derecha
+
+        inc r11
+        cmp r9, 5
+        jg .check_diagonales_superiores
+        cmp byte [tablero + r11], ' '
+        jne .check_diagonales_superiores
+
+        mov byte [array_movimientos_posibles + rcx], r11b
+        inc rcx
+
+        .check_normal_derecha:
+        mov r11, rdi
+        inc r11
+        cmp byte [tablero + r11], ' '
+        jne .check_diagonales_superiores
+        mov byte [array_movimientos_posibles + rcx], r11b
+        inc rcx
+
+    ; -------------------------------------------
+    ; Movimientos diagonales superiores
+    .check_diagonales_superiores:
+        ; Arriba izquierda
+        mov r11, rdi
+        sub r11, 8
+
+        cmp r11, 0
+        jl .check_diagonal_superior_derecha
+        cmp r9, 0
+        je .check_diagonal_superior_derecha
+
+        cmp byte [tablero + r11], 'X'
+        jne .check_normal_arriba_izquierda
+
+        sub r11, 8
+        cmp r11, 0
+        jl .check_diagonal_superior_derecha
+        cmp byte [tablero + r11], ' '
+        jne .check_diagonal_superior_derecha
+
+        mov byte [array_movimientos_posibles + rcx], r11b
+        inc rcx
+
+        .check_normal_arriba_izquierda:
+        mov r11, rdi
+        sub r11, 8
+        cmp byte [tablero + r11], ' '
+        jne .check_diagonal_superior_derecha
+        mov byte [array_movimientos_posibles + rcx], r11b
+        inc rcx
+
+        ; Arriba derecha
+        .check_diagonal_superior_derecha:
+        mov r11, rdi
+        sub r11, 6
+
+        cmp r11, 0
+        jl .check_diagonales_inferiores
+        cmp r9, 6
+        je .check_diagonales_inferiores
+
+        cmp byte [tablero + r11], 'X'
+        jne .check_normal_arriba_derecha
+
+        sub r11, 6
+        cmp r11, 0
+        jl .check_diagonales_inferiores
+        cmp byte [tablero + r11], ' '
+        jne .check_diagonales_inferiores
+
+        mov byte [array_movimientos_posibles + rcx], r11b
+        inc rcx
+
+        .check_normal_arriba_derecha:
+        mov r11, rdi
+        sub r11, 6
+        cmp byte [tablero + r11], ' '
+        jne .check_diagonales_inferiores
+        mov byte [array_movimientos_posibles + rcx], r11b
+        inc rcx
+
+    ; -------------------------------------------
+    ; Movimientos diagonales inferiores
+    .check_diagonales_inferiores:
+        ; Abajo izquierda
+        mov r11, rdi
+        add r11, 6
+
+        cmp r11, 49
+        jge .check_diagonal_inferior_derecha
+        cmp r9, 0
+        je .check_diagonal_inferior_derecha
+
+        cmp byte [tablero + r11], 'X'
+        jne .check_normal_abajo_izquierda
+
+        add r11, 6
+        cmp r11, 49
+        jge .check_diagonal_inferior_derecha
+        cmp byte [tablero + r11], ' '
+        jne .check_diagonal_inferior_derecha
+
+        mov byte [array_movimientos_posibles + rcx], r11b
+        inc rcx
+
+        .check_normal_abajo_izquierda:
+        mov r11, rdi
+        add r11, 6
+        cmp byte [tablero + r11], ' '
+        jne .check_diagonal_inferior_derecha
+        mov byte [array_movimientos_posibles + rcx], r11b
+        inc rcx
+
+        ; Abajo derecha
+        .check_diagonal_inferior_derecha:
+        mov r11, rdi
+        add r11, 8
+
+        cmp r11, 49
+        jge .finalizar
+        cmp r9, 6
+        je .finalizar
+
+        cmp byte [tablero + r11], 'X'
+        jne .check_normal_abajo_derecha
+
+        add r11, 8
+        cmp r11, 49
+        jge .finalizar
+        cmp byte [tablero + r11], ' '
+        jne .finalizar
+
+        mov byte [array_movimientos_posibles + rcx], r11b
+        inc rcx
+
+        .check_normal_abajo_derecha:
+        mov r11, rdi
+        add r11, 8
+        cmp byte [tablero + r11], ' '
+        jne .finalizar
+        mov byte [array_movimientos_posibles + rcx], r11b
+        inc rcx
+
+    ; -------------------------------------------
     .finalizar:
     mov r8, 9
-    sub r8, rcx ; calculamos cuántas posiciones nos faltan llenar
+    sub r8, rcx
 
-    mov r9, rcx ; guardamos la posición inicial en r9
-    mov rcx, r8 ; movemos a rcx la cantidad de iteraciones para loop
+    mov r9, rcx
+    mov rcx, r8
 
     .loop_rellenar:
     mov byte [array_movimientos_posibles + r9], 0
     inc r9
     loop .loop_rellenar
+
 
     ret
 
