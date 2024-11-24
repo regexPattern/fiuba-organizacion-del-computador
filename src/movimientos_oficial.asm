@@ -569,6 +569,7 @@ efectuar_movimiento_oficial:
     mov rcx, 0
 
     .loop_validacion_sin_captura_disp:
+    ; bl = índice absoluto del movimiento posible
     mov bl, byte [array_movimientos_posibles + rcx]
     cmp bl, 0
     je .finalizar ; no había movimientos de captura disponibles
@@ -577,10 +578,11 @@ efectuar_movimiento_oficial:
     ; hacia abajo) o 2 celdas (2 izquierda o 2 derecha), entonces significa que
     ; tenía un movimiento de captura.
     ;
-    sub bl, dl
+    sub bl, dil ; dil = índice absoluto de la posición actual (para encontrar el offset)
+                ; este calculo me calcula el offset (con signo)
     test bl, bl
     jge .distancia_absoluta_celdas
-    neg al
+    neg bl
 
     .distancia_absoluta_celdas:
     cmp bl, 14
