@@ -150,7 +150,7 @@ main:
 
     mov rdi, msg_oficial_capturado
     sub rsp, 8
-    printf
+    call printf
     add rsp, 8
 
     ; ya cuando efectuamos el turno:

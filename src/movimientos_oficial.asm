@@ -32,9 +32,10 @@ cargar_movimientos_oficial:
     ; límite superior de todo el tablero.
     ;
     cmp r9, 2
-    jl .check_captura_arriba
+    jl .check_normal_arriba_aspa_lateral
     cmp r9, 4
-    jle .check_captura_arriba
+    jg .check_normal_arriba_aspa_lateral
+    jmp .check_captura_arriba
 
     ; en el caso de estar en las aspas, el límite superior que nos importa es el
     ; de las aspas.
@@ -89,6 +90,70 @@ cargar_movimientos_oficial:
     inc rcx
 
     .check_limites_abajo:
+    ; de nuevo, primero verificamos si estamos en una posicion donde tenemos
+    ; condiciones especiales para el movimiento en cuestión (en las aspas
+    ; horizontales para el caso de movimientos hacia abajo).
+    ;
+    cmp r9, 2
+    jl .check_normal_abajo_aspa_lateral
+    cmp r9, 4
+    jg .check_normal_abajo_aspa_lateral
+    jmp .check_captura_abajo
+
+    ; en el caso de estar en las aspas, el límite inferior que nos importa es el
+    ; de las aspas.
+    ;
+    .check_normal_abajo_aspa_lateral:
+    ; Si estamos en las aspas laterales, no permitimos ningun movimiento hacia
+    ; abajo en la última fila.
+    ;
+    cmp rax, 4
+    je .check_limites_izquierda
+
+    ; si estamos en la penúltima fila de las aspas no permitimos
+    ; movimientos de captura hacia abajo.
+    ;
+    cmp rax, 3
+    je .check_normal_abajo
+
+    .check_captura_abajo:
+    ; verificar si hay un soldado directamente abajo
+    mov r11, rdi
+    add r11, 7
+
+    cmp byte [tablero + r11], 'X'
+    jne .check_normal_abajo
+
+    ; para captura, verificar la siguiente posición
+    add r11, 7 ; r11 ahora tiene la posición después del salto sobre el soldado
+
+    ; verificar que no nos salimos del tablero (por abajo)
+    cmp r11, 49
+    jge .check_limites_izquierda
+
+    ; verificar que la posición de salto está vacía
+    cmp byte [tablero + r11], ' '
+    jne .check_limites_izquierda
+
+    mov byte [array_movimientos_posibles + rcx], r11b
+    inc rcx
+
+    ; si puedo hacer un movimiento de captura hacia abajo, automáticamente no
+    ; puedo hacer un movimiento normal hacia abajo, porque significa que la
+    ; celda de abajo está ocupada por un soldado.
+    jmp .check_limites_izquierda
+
+    .check_normal_abajo:
+    ; verificar si la casilla de abajo está vacía
+    mov r11, rdi
+    add r11, 7
+
+    cmp byte [tablero + r11], ' '
+    jne .check_limites_izquierda
+    mov byte [array_movimientos_posibles + rcx], r11b
+    inc rcx
+
+    .check_limites_izquierda:
 
     .finalizar:
     mov r8, 9

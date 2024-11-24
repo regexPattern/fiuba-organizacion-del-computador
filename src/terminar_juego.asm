@@ -106,6 +106,7 @@ juego_terminado:
     ; Si estamos aca es porque quedan menos de 8 soldados (los oficiales
     ; diezmaron a los soldados).
     mov rax, 3
+    ret
 
     .juego_sigue_en_curso:
     mov rax, 0
