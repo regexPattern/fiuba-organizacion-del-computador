@@ -148,7 +148,7 @@ cargar_movimientos_soldado:
     inc rcx
 
     .finalizar:
-    mov r8, 9
+    mov r8, 12 ; tamaño máximo del arreglo
     sub r8, rcx ; calculamos cuántas posiciones nos faltan llenar
 
     mov r9, rcx ; guardamos la posición inicial en r9

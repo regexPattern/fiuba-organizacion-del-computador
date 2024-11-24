@@ -194,10 +194,13 @@ cargar_movimientos_oficial:
     dec r11 ; r11 ahora tiene la posición después del salto sobre el soldado
 
     ; verificar que seguimos en la misma fila después del salto
+    push rcx
     mov rax, r11
     mov rcx, 7
     xor rdx, rdx
     div rcx
+    pop rcx
+
     cmp rax, r8 ; comparamos la fila nueva con la fila actual
     jne .check_normal_izquierda ; si no es la misma fila, el movimiento no es válido
 
@@ -220,8 +223,9 @@ cargar_movimientos_oficial:
     mov rcx, 7
     xor rdx, rdx
     div rcx
-    cmp rax, r8 ; comparamos la fila nueva con la fila actual
     pop rcx
+
+    cmp rax, r8 ; comparamos la fila nueva con la fila actual
     jne .check_limites_derecha ; si no es la misma fila, el movimiento no es válido
 
     cmp byte [tablero + r11], ' '
@@ -246,7 +250,7 @@ cargar_movimientos_oficial:
     ; la derecha en la columna más a la derecha
     ;
     cmp r9, 4
-    je .finalizar
+    je .check_limites_diagonal_arriba_izquierda
 
     ; si estamos en la penúltima columna desde la derecha no permitimos
     ; movimientos de captura hacia la derecha
@@ -266,20 +270,23 @@ cargar_movimientos_oficial:
     inc r11 ; r11 ahora tiene la posición después del salto sobre el soldado
 
     ; verificar que seguimos en la misma fila después del salto
+    push rcx
     mov rax, r11
     mov rcx, 7
     xor rdx, rdx
     div rcx
+    pop rcx
+
     cmp rax, r8 ; comparamos la fila nueva con la fila actual
     jne .check_normal_derecha ; si no es la misma fila, el movimiento no es válido
 
     ; verificar que la posición de salto está vacía
     cmp byte [tablero + r11], ' '
-    jne .finalizar
+    jne .check_limites_diagonal_arriba_izquierda
 
     mov byte [array_movimientos_posibles + rcx], r11b
     inc rcx
-    jmp .finalizar
+    jmp .check_limites_diagonal_arriba_izquierda
 
     .check_normal_derecha:
     ; verificar si la casilla a la derecha está vacía
@@ -291,18 +298,193 @@ cargar_movimientos_oficial:
     mov rax, r11
     mov rcx, 7
     xor rdx, rdx
-    div rcx
-    cmp rax, r8 ; comparamos la fila nueva con la fila actual
+    div rcx ; rax = nueva fila
     pop rcx
-    jne .finalizar ; si no es la misma fila, el movimiento no es válido
 
+    cmp rax, r8 ; comparamos la fila nueva con la fila actual
+    jne .check_limites_diagonal_arriba_izquierda ; si no es la misma fila, el movimiento no es válido
+
+    cmp byte [tablero + r11], ' '
+    jne .check_limites_diagonal_arriba_izquierda
+    mov byte [array_movimientos_posibles + rcx], r11b
+    inc rcx
+
+    ; ========== DIAGONAL ARRIBA IZQUIERDA ==========
+    ;
+    .check_limites_diagonal_arriba_izquierda:
+    mov r11, rdi
+    sub r11, 8
+
+    push rcx
+    mov rax, r11
+    mov rcx, 7
+    xor rdx, rdx
+    div rcx ; rax = nueva fila; rdx = nueva columna
+    pop rcx
+
+    ; Si nos salimos del tablero por arriba el movimiento es invalido.
+    cmp rax, 0
+    jl .check_limites_diagonal_arriba_derecha
+
+    ; Si nos salimos del tablero por la izquierda el movimiento es invalido
+    ; (esto lo checkeamos como antes, comparando con la columna actual, si es
+    ; mayor, tenemos wrap-around)
+    ;
+    cmp rdx, r9 ; comparamos la nueva columna con la anterior
+    jge .check_limites_diagonal_arriba_derecha
+
+    ; Si caemos en el cuadrado 2x2 de la esquina superior o inferieor izquierda es un
+    ; movimiento invalido. (este sería el checkeo de las aspas tanto verticales
+    ; como horizontales).
+    ;
+    ; matriz 2x2 esquina superior izquierda
+    cmp rax, 2 ; fila
+    jge .check_mov_arriba_matriz_inferior_izquierda
+    cmp rdx, 2 ; col
+    jge .check_mov_arriba_matriz_inferior_izquierda
+    jmp .check_limites_diagonal_arriba_derecha ; acá fila <= 1 && col <= 1
+
+    ; matriz 2x2 esquina inferior izquierda
+    .check_mov_arriba_matriz_inferior_izquierda:
+    cmp rax, 5 ; fila
+    jl .check_normal_arriba_izquierda
+    cmp rdx, 2 ; col
+    jge .check_normal_arriba_izquierda
+    jmp .check_limites_diagonal_arriba_derecha ; acá fila >= 5 && col <= 1
+
+    .check_normal_arriba_izquierda:
+    cmp byte [tablero + r11], ' '
+    jne .check_limites_diagonal_arriba_derecha
+    mov byte [array_movimientos_posibles + rcx], r11b
+    inc rcx
+
+    ; ========== DIAGONAL ARRIBA DERECHA ==========
+    ;
+    .check_limites_diagonal_arriba_derecha:
+    mov r11, rdi
+    sub r11, 6
+
+    push rcx
+    mov rax, r11
+    mov rcx, 7
+    xor rdx, rdx
+    div rcx ; rax = nueva fila; rdx = nueva columna
+    pop rcx
+
+    ; Si nos salimos del tablero por arriba el movimiento es invalido.
+    cmp rax, 0
+    jl .check_limites_diagonal_abajo_derecha
+
+    ; Si nos salimos del tablero por la derecha el movimiento es invalido
+    cmp rdx, r9 ; comparamos la nueva columna con la anterior
+    jle .check_limites_diagonal_abajo_derecha
+
+    ; Checkeo de las matrices 2x2 en las esquinas
+    ; matriz 2x2 esquina superior derecha
+    cmp rax, 2 ; fila
+    jge .check_mov_arriba_matriz_inferior_derecha
+    cmp rdx, 4 ; col
+    jle .check_mov_arriba_matriz_inferior_derecha
+    jmp .check_limites_diagonal_abajo_derecha ; acá fila <= 1 && col >= 5
+
+    .check_mov_arriba_matriz_inferior_derecha:
+    cmp rax, 5 ; fila
+    jl .check_normal_arriba_derecha
+    cmp rdx, 4 ; col
+    jle .check_normal_arriba_derecha
+    jmp .check_limites_diagonal_abajo_derecha ; acá fila >= 5 && col >= 5
+
+    .check_normal_arriba_derecha:
+    cmp byte [tablero + r11], ' '
+    jne .check_limites_diagonal_abajo_derecha
+    mov byte [array_movimientos_posibles + rcx], r11b
+    inc rcx
+
+    ; ========== DIAGONAL ABAJO DERECHA ==========
+    .check_limites_diagonal_abajo_derecha:
+    mov r11, rdi
+    add r11, 8
+
+    push rcx
+    mov rax, r11
+    mov rcx, 7
+    xor rdx, rdx
+    div rcx ; rax = nueva fila; rdx = nueva columna
+    pop rcx
+
+    ; Si nos salimos del tablero por abajo el movimiento es invalido.
+    cmp rax, 6
+    jg .check_limites_diagonal_abajo_izquierda
+
+    ; Si nos salimos del tablero por la derecha el movimiento es invalido
+    cmp rdx, r9 ; comparamos la nueva columna con la anterior
+    jle .check_limites_diagonal_abajo_izquierda
+
+    ; Checkeo de las matrices 2x2 en las esquinas
+    ; matriz 2x2 esquina superior derecha
+    cmp rax, 2 ; fila
+    jge .check_mov_abajo_matriz_inferior_derecha
+    cmp rdx, 4 ; col
+    jle .check_mov_abajo_matriz_inferior_derecha
+    jmp .check_limites_diagonal_abajo_izquierda ; acá fila <= 1 && col >= 5
+
+    .check_mov_abajo_matriz_inferior_derecha:
+    cmp rax, 5 ; fila
+    jl .check_normal_abajo_derecha
+    cmp rdx, 4 ; col
+    jle .check_normal_abajo_derecha
+    jmp .check_limites_diagonal_abajo_izquierda ; acá fila >= 5 && col >= 5
+
+    .check_normal_abajo_derecha:
+    cmp byte [tablero + r11], ' '
+    jne .check_limites_diagonal_abajo_izquierda
+    mov byte [array_movimientos_posibles + rcx], r11b
+    inc rcx
+
+    ; ========== DIAGONAL ABAJO IZQUIERDA ==========
+    .check_limites_diagonal_abajo_izquierda:
+    mov r11, rdi
+    add r11, 6
+
+    push rcx
+    mov rax, r11
+    mov rcx, 7
+    xor rdx, rdx
+    div rcx ; rax = nueva fila; rdx = nueva columna
+    pop rcx
+
+    ; Si nos salimos del tablero por abajo el movimiento es invalido.
+    cmp rax, 6
+    jg .finalizar
+
+    ; Si nos salimos del tablero por la izquierda el movimiento es invalido
+    cmp rdx, r9 ; comparamos la nueva columna con la anterior
+    jge .finalizar
+
+    ; Si caemos en el cuadrado 2x2 de la esquina superior o inferior izquierda es un
+    ; movimiento invalido.
+    ; matriz 2x2 esquina superior izquierda
+    cmp rax, 2 ; fila
+    jge .check_mov_abajo_matriz_inferior_izquierda
+    cmp rdx, 2 ; col
+    jge .check_mov_abajo_matriz_inferior_izquierda
+    jmp .finalizar ; acá fila <= 1 && col <= 1
+
+    .check_mov_abajo_matriz_inferior_izquierda:
+    cmp rax, 5 ; fila
+    jl .check_normal_abajo_izquierda
+    cmp rdx, 2 ; col
+    jge .check_normal_abajo_izquierda
+    jmp .finalizar ; acá fila >= 5 && col <= 1
+
+    .check_normal_abajo_izquierda:
     cmp byte [tablero + r11], ' '
     jne .finalizar
     mov byte [array_movimientos_posibles + rcx], r11b
     inc rcx
 
     .finalizar:
-    mov r8, 9
+    mov r8, 12 ; tamaño máximo del arreglo
     sub r8, rcx ; calculamos cuántas posiciones nos faltan llenar
 
     mov r9, rcx ; guardamos la posición inicial en r9

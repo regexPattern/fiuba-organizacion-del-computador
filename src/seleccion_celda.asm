@@ -22,7 +22,7 @@
 
     section .bss
 
-    array_movimientos_posibles resb 9
+    array_movimientos_posibles resb 12
     buffer_movimiento_ingresado resb 1
     es_movimiento_valido resb 1 ; (0 = invalido, 1 = valido)
 
