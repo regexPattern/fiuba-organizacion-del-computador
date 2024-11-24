@@ -38,6 +38,7 @@
     msg_fin MENSAJE_RESALTADO " El juego ha terminado "
     msg_err_celda_invalida MENSAJE_ERROR " Celda ingresada es inválida - Vuelva a ingresar "
     msg_err_sin_movimientos MENSAJE_ERROR " Ficha seleccionada no tiene movimientos posibles - Elija otra ficha "
+    msg_oficial_capturado MENSAJE_RESALTADO " !Oficial omitió su captura! "
 
     ansi_limpiar_pantalla db 0x1b,"[2J",0x1b,"[H",0
     msg_continuar_juego db 10,"¿Continuar en el juego? [Y/n]: ",0
@@ -129,7 +130,7 @@ main:
     mov rdi, rax
     call validar_prox_celda_seleccionada ; valida = 1, invalida = 0
     cmp rax, 1
-    je .efectuar_movimiento ; TODO: manejar el caso negativo, falta validar si es una de las celdas que esta en el array de movimientos posibles
+    je .efectuar_movimiento
 
     .efectuar_movimiento:
     movzx rdi, byte [buffer_celda_seleccionada]
@@ -143,7 +144,14 @@ main:
     jmp .verificar_estado_juego
 
     .mover_oficial:
-    call efectuar_movimiento_oficial
+    call efectuar_movimiento_oficial ; retorna rax = 1 si se removió al oficial del tablero (0 si no)
+    cmp rax, 1
+    jne .verificar_estado_juego
+
+    mov rdi, msg_oficial_capturado
+    sub rsp, 8
+    printf
+    add rsp, 8
 
     ; ya cuando efectuamos el turno:
     .verificar_estado_juego:
