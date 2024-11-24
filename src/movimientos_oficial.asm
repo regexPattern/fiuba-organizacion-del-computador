@@ -595,8 +595,8 @@ efectuar_movimiento_oficial:
     jmp .finalizar
 
     .habia_mov_captura_disp:
-    ; en este caso eliminamos al oficial del tablero
-    mov byte [tablero + rdi], ' '
+    ; en este caso eliminamos al oficial del tablero (ya lo habíamos movido)
+    mov byte [tablero + rsi], ' '
     mov rax, 1
     jmp .finalizar
 

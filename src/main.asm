@@ -38,7 +38,7 @@
     msg_fin MENSAJE_RESALTADO " El juego ha terminado "
     msg_err_celda_invalida MENSAJE_ERROR " Celda ingresada es inválida - Vuelva a ingresar "
     msg_err_sin_movimientos MENSAJE_ERROR " Ficha seleccionada no tiene movimientos posibles - Elija otra ficha "
-    msg_oficial_capturado MENSAJE_RESALTADO " !Oficial omitió su captura! "
+    msg_oficial_capturado MENSAJE_RESALTADO " ¡Oficial omitió su captura! "
 
     ansi_limpiar_pantalla db 0x1b,"[2J",0x1b,"[H",0
     msg_continuar_juego db 10,"¿Continuar en el juego? [Y/n]: ",0
