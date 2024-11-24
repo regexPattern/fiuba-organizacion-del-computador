@@ -1,187 +1,113 @@
-    global encontrar_ganador
     global juego_terminado
 
-    extern printf
     extern array_movimientos_posibles
     extern cargar_movimientos_oficial
     extern tablero
 
-    ;%macro imprimirGanador 0
-    ;    mov     rdi, mensaje_ganador
-    ;    mov     rsi, [ganador]
-    ;    sub     rsp, 8
-    ;    call    printf
-    ;    add     rsp, 8
-    ;%endmacro
-
-    section .data
-
-    formatoFila     db "%s", 0 ; Formato para cada fila
-    mensaje         db "soldado: ",10,0
-    mensajeDos      db "oficial: ",10,0
-    mensajeTres     db "Oficial libre en posicion: %i",10,0
-    CANT_FIL	    dq	7
-    CANT_COL	    dq	7
-    LONG_ELEM       dq  1
-    indiceFortaleza dq	31
-    indiceTablero   dq  0
-
-    section .bss
-
     section .text
 
     ; retorna:
-    ; - rax: 1 si el juego está terminado, 0 en otro caso.
-    ; - rbx: 1 si el juego fue ganado por los soldados, 0 si fue ganado por los
-    ;   oficiales. solo tiene sentido en caso de que rax sea 1.
+    ; - rax: 0 si el juego sigue en curso
+    ;        1 si ganaron los soldados llenando la fortaleza
+    ;        2 si ganaron los soldados rodeando a los oficiales
+    ;        3 si ganaron los oficiales
     ;
 juego_terminado:
-    ; el valor por defecto es que no ha termino, a menos que encontremos una
-    ; condición que nos diga que si finalizó, devolvemos esto
-    ;
-    mov rax, 0
-
-    ; primero revisamos si los soldados ocupan todos los puntos del interior de
-    ; la fortaleza.
+    ; Primero revisamos si los soldados ocupan todos los puntos del interior de
+    ; la fortaleza. Si esto se cumple entonces ganan los soldados.
     ;
     .verificar_soldados_en_fortaleza:
-    mov r8, 4
+    mov r8, 4 ; índice filas
 
     .loop_filas_fortaleza:
-    mov r9, 3
+    mov r9, 2 ; índice columnas
 
     .loop_columnas_fortaleza:
     mov r10, r8
     imul r10, 7
     add r10, r9
 
+    ; Si hay alguna casilla del tablero que no sea 'X' entonces esta condición
+    ; no está satisfecha aún.
+    ;
     cmp byte [tablero + r10], 'X'
-    jne .hay_uno_que_no_es_soldado
+    jne .verificar_oficiales_incapacitados
 
     inc r9
-    cmp r9, 6
+    cmp r9, 5
     jl .loop_columnas_fortaleza
 
     inc r8
     cmp r8, 7
     jl .loop_filas_fortaleza
 
-    .todos_son_soldados:
+    ; Si llegamos acá es porque todos los que están en la fortaleza son soldados
     mov rax, 1
-    jmp .finalizar
-
-    .hay_uno_que_no_es_soldado:
-
-    .finalizar:
     ret
 
-; Retorna en RAX al ganador (si lo hay).
-; 0 Si no hay.
-; 1 Si ganaron los soldados.
-; 2 Si ganaron los oficiales.
-; Parametros:
-;  • rdi - Turno actual(0 = oficiales y 1 = soldados)
-encontrar_ganador:
-    cmp     rdi, 0
-    je      chequear_si_ganan_soldados
-    cmp     rdi, 1
-    je      chequear_si_ganan_oficiales
+    ; Si llegamos acá es que hay uno en la fortaleza que no es un soldado. Vamos
+    ; a ver verificar la segunda condición en la que ganan los soldados.
 
-; Retorna "1" si:
-; 1) Todas las posiciones de la fortaleza estan ocupadas
-; Si no, comprueba si los oficiales pueden moverse
-chequear_si_ganan_soldados:
-    sub     rsp, 8
-    call    chequear_fortaleza_ocupada
-    add     rsp,8
-    cmp     rax, 1
-    je      ganaron_soldados
+    .verificar_oficiales_incapacitados:
 
-    sub     rsp, 8
-    call    chequear_oficiales_incapacitados
-    add     rsp,8
-    cmp     rax, 1
-    je      ganaron_soldados
+    ; Encontramos las posiciones de los oficiales en el tablero, vemos qué
+    ; movimientos tiene disponibles cada uno, y si ninguno de los dos tienen
+    ; alguno disponible entonces finalizamos el juego.
+    ;
+    mov r12, 0
 
-    xor     rax, rax
+    .loop_busqueda_oficial:
+    cmp byte [tablero + r12], 'O'
+    jne .seguir_buscando_oficial
+
+    ; Si encontramos un oficial, generamos su listado de movimientos posibles
+    ; para ver si hay alguno. Cuando encontramos a un oficial con movimientos,
+    ; entonces ya sabemos que esta condicion no se cumple.
+    ;
+    mov rdi, r12
+    call cargar_movimientos_oficial
+    cmp byte [array_movimientos_posibles], 0
+    jne .verificar_oficiales_diezmaron_soldados
+
+    .seguir_buscando_oficial:
+    inc r12
+    cmp r12, 49
+    jl .loop_busqueda_oficial
+
+    ; Si recorrí todo el tablero y no encontré oficiales con movimientos,
+    ; entonces ganaron los soldados por inmobilizar a los oficiales
+    ;
+    mov rax, 2
     ret
 
-chequear_fortaleza_ocupada:
-    mov		rcx,[indiceFortaleza]
-    dec		rcx
-    imul	rbx,rcx,1
-    mov     r14, 5 ; Fortaleza empieza en la fila 5
-    .iterar_por_fila:
-    mov     r15, 3  ; Fortaleza empieza en la columna 3
-    .iterar_por_columna:
-    cmp     byte [tablero+rbx], ' '
-    je      no_esta_ocupada
-    inc     rbx
-    add     r15, 1
-    cmp     r15, 6 ; Finaliza si se pasa de la columna 5
-    jne     .iterar_por_columna
-    inc     r14
-    add     rbx, 4
-    cmp     r14, 8 ; Finaliza si se pasa de la fila 7
-    jne     .iterar_por_fila
+    ; Si estamos acá es porque el castillo no está lleno, y hay oficiales con
+    ; movimientos, es decir, los soldados no han ganado. Vamos a verificar si
+    ; los oficiales han ganado mas bien. La única forma en el que eso puede
+    ; pasar es que solo queden 8 soldados.
+    ;
+    .verificar_oficiales_diezmaron_soldados:
+    mov r9, 0 ; contador soldados
 
-    mov     rax, 1
-    ret
+    mov r8, 0
+    .loop_contar_soldados:
+    cmp byte [tablero + r8], 'X'
+    jne .seguir_buscando_soldados
 
-no_esta_ocupada:
-    mov     rax, 0
-    ret
+    inc r9
 
-;Retorna 1 si despues de iterar el tablero no existe algun oficial
-;que tenga movimientos posibles
-chequear_oficiales_incapacitados:
-    mov		r13,[indiceTablero]
-    .loopTablero:
-    cmp     byte [tablero+r13], 'O'
-    je      .verificar_oficial_libre
-    .seguir_buscando:
-    inc     r13
-    cmp     r13, 49
-    jl      .loopTablero
-    mov     rax, 1
-    ret
+    .seguir_buscando_soldados:
+    inc r8
+    cmp r8, 49
+    jl .loop_contar_soldados
 
-    .verificar_oficial_libre:
-    mov     rdi, r13
-    call    cargar_movimientos_oficial
-    cmp     byte [array_movimientos_posibles], 0
-    jne     oficial_libre
-    jmp     .seguir_buscando
+    cmp r9, 8
+    jg .juego_sigue_en_curso
 
-oficial_libre:
-    xor     rax, rax
-    ret
+    ; Si estamos aca es porque quedan menos de 8 soldados (los oficiales
+    ; diezmaron a los soldados).
+    mov rax, 3
 
-ganaron_soldados:
-    mov     rax, 1
-    ret
+    .juego_sigue_en_curso:
+    mov rax, 0
 
-; Retorna "2" si:
-; 1) Solo queden 8 soldados(o menos)
-chequear_si_ganan_oficiales:
-    mov		r13,[indiceTablero]
-    xor     r14, r14
-    .loopTablero:
-    cmp     byte [tablero+r13], 'X'
-    je      .contabilizar_soldado
-    .seguir_buscando:
-    inc     r13
-    cmp     r13, 49
-    jl      .loopTablero
-    cmp     r14, 8
-    jle     ganaron_oficiales
-    xor     rax, rax
-    ret
-
-    .contabilizar_soldado:
-    inc     r14
-    jmp     .seguir_buscando
-
-ganaron_oficiales:
-    mov     rax, 2
     ret

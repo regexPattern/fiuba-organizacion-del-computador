@@ -30,16 +30,17 @@
 
     section .data
 
-    mensaje_turno_soldado MENSAJE_RESALTADO " Turno del soldado "
-    mensaje_turno_oficial MENSAJE_RESALTADO " Turno del oficial "
-    mensaje_ganador_soldados MENSAJE_RESALTADO " ¡Soldados ganan! "
-    mensaje_ganador_oficiales MENSAJE_RESALTADO " ¡Oficiales ganan! "
-    mensaje_fin MENSAJE_RESALTADO " El juego ha terminado "
-    mensaje_err_celda_invalida MENSAJE_ERROR " Celda ingresada es inválida - Vuelva a ingresar "
-    mensaje_err_sin_movimientos MENSAJE_ERROR " Ficha seleccionada no tiene movimientos posibles - Elija otra ficha "
+    msg_turno_soldado MENSAJE_RESALTADO " Turno del soldado "
+    msg_turno_oficial MENSAJE_RESALTADO " Turno del oficial "
+    msg_ganador_soldados_fortaleza_llena MENSAJE_RESALTADO " ¡Soldados ganan! (Fortaleza capturada) "
+    msg_ganador_soldados_oficiales_rodeados MENSAJE_RESALTADO " ¡Soldados ganan! (Oficiales inmobilizados) "
+    msg_ganador_oficiales MENSAJE_RESALTADO " ¡Oficiales ganan! (Soldados diezmados) "
+    msg_fin MENSAJE_RESALTADO " El juego ha terminado "
+    msg_err_celda_invalida MENSAJE_ERROR " Celda ingresada es inválida - Vuelva a ingresar "
+    msg_err_sin_movimientos MENSAJE_ERROR " Ficha seleccionada no tiene movimientos posibles - Elija otra ficha "
 
     ansi_limpiar_pantalla db 0x1b,"[2J",0x1b,"[H",0
-    mensaje_continuar_juego db 10,"¿Continuar en el juego? [Y/n]: ",0
+    msg_continuar_juego db 10,"¿Continuar en el juego? [Y/n]: ",0
 
     input_salir_del_juego db " %c",0
 
@@ -71,10 +72,8 @@ main:
     mov rdi, 0
     call tablero_renderizar
 
-    call encontrar_ganador
-
     .inicio_ejecucion_turno: ; <====== acá se regresa en caso de input inválida
-    call mostrar_mensaje_turno
+    call mostrar_msg_turno
     call seleccionar_celda
 
     mov byte [buffer_celda_seleccionada], al ; guardamos la celda actual para `.efectuar_movimiento`
@@ -86,7 +85,7 @@ main:
 
     .celda_invalida:
     sub rsp, 8
-    mov rdi, mensaje_err_celda_invalida
+    mov rdi, msg_err_celda_invalida
     call printf
     add rsp, 8
 
@@ -112,7 +111,7 @@ main:
     jne .seleccionar_prox_celda
 
     .ficha_no_tiene_movimientos:
-    mov rdi, mensaje_err_sin_movimientos
+    mov rdi, msg_err_sin_movimientos
     sub rsp, 8
     call printf
     add rsp, 8
@@ -148,13 +147,21 @@ main:
 
     ; ya cuando efectuamos el turno:
     .verificar_estado_juego:
-    call juego_terminado
-    cmp rax, 1 ; 1 = juego terminado, 0 = juego no terminado
 
-    ; TODO: en este momento rbx va tener 1 si el juego fue ganador por los
-    ; soldados y 0 si fue ganado por los oficiales.
+    ; mostramos el tablero actualizado despues el movimiento
+    mov rdi, 0
+    call tablero_actualizar
+
+    ; verificamos si el juego ha terminado
+    call juego_terminado
     ;
-    je .finalizar_juego_ganado
+    ; 0 si el juego sigue en curso
+    ; 1 si ganaron los soldados llenando la fortaleza
+    ; 2 si ganaron los soldados rodeando a los oficiales
+    ; 3 si ganaron los oficiales
+    ;
+    cmp rax, 0 ; juego sigue en curso
+    jne .finalizar_juego_ganado
 
     .continuar_juego:
     ; cambiar de turno y continuar el juego
@@ -162,25 +169,27 @@ main:
     xor al, 1
     mov [es_turno_soldado], al
 
-    mov rdi, 0
-    call tablero_actualizar
-    call mostrar_mensaje_continuar_juego
+    call mostrar_msg_continuar_juego
 
     cmp byte [buffer_salir_del_juego], "n"
     je .finalizar ; el usuario explícitamente quiere salir del juego
 
-    jmp .game_loop ; avanzamos al siguiente turno
+    jmp .game_loop ; avanzamos al siguiente turno (acá el juego sigue en curso)
 
     .finalizar_juego_ganado:
-    cmp rbx, 1 ; `juego_terminado` nos devolvió este valor
-    jne .mostrar_ganador_oficiales
+    cmp rax, 1 ; ganaron los soldados llenando la fortaleza
+    jne .ganador_soldados_oficiales_rodeados
+    mov rdi, msg_ganador_soldados_fortaleza_llena
+    jmp .mostrar_ganador
 
-    .mostrar_ganador_soldados:
-    mov rdi, mensaje_ganador_soldados
+    .ganador_soldados_oficiales_rodeados:
+    cmp rax, 2 ; ganaron los soldados rodeando a los oficiales
+    jne .mostrar_ganador_oficiales
+    mov rdi, msg_ganador_soldados_oficiales_rodeados
     jmp .mostrar_ganador
 
     .mostrar_ganador_oficiales:
-    mov rdi, mensaje_ganador_oficiales
+    mov rdi, msg_ganador_oficiales
 
     .mostrar_ganador:
     sub rsp, 8
@@ -190,7 +199,7 @@ main:
     .finalizar:
     call tablero_finalizar
 
-    mov rdi, mensaje_fin
+    mov rdi, msg_fin
     sub rsp, 8
     call printf
     add rsp, 8
@@ -240,16 +249,16 @@ validar_prox_celda_seleccionada:
     ; muestra el mensaje de inicio de turno correspondiente a quien está
     ; ejecutando el turno actualmente
     ;
-mostrar_mensaje_turno:
+mostrar_msg_turno:
     cmp byte [es_turno_soldado], 1
-    jne .mensaje_turno_oficiales
-    mov rdi, mensaje_turno_soldado
-    jmp .mostrar_mensaje_turno
+    jne .msg_turno_oficiales
+    mov rdi, msg_turno_soldado
+    jmp .mostrar_msg_turno
 
-.mensaje_turno_oficiales:
-    mov rdi, mensaje_turno_oficial
+.msg_turno_oficiales:
+    mov rdi, msg_turno_oficial
 
-.mostrar_mensaje_turno:
+.mostrar_msg_turno:
     call printf
 
     ret
@@ -258,8 +267,8 @@ mostrar_mensaje_turno:
     ; imprime el mensaje para salir del juego y pide la respuesta al usuario
     ; para almacenarla en `buffer_salir_del_juego`
     ;
-mostrar_mensaje_continuar_juego:
-    mov rdi, mensaje_continuar_juego
+mostrar_msg_continuar_juego:
+    mov rdi, msg_continuar_juego
     call printf
 
     mov rdi, 0
