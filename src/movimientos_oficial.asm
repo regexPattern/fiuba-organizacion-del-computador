@@ -26,21 +26,23 @@ cargar_movimientos_oficial:
 
     xor rcx, rcx ; rcx = índice del array
 
+    ; ========== ARRIBA ==========
+    ;
     .check_limites_arriba:
     ; si estamos en una columa entre la 2 y la 4 (inclusive) significa que no
     ; estamos en las aspas, por lo tanto, el único límite que nos importa es el
     ; límite superior de todo el tablero.
     ;
     cmp r9, 2
-    jl .check_normal_arriba_aspa_lateral
+    jl .check_normal_arriba_aspa_horizontal
     cmp r9, 4
-    jg .check_normal_arriba_aspa_lateral
+    jg .check_normal_arriba_aspa_horizontal
     jmp .check_captura_arriba
 
     ; en el caso de estar en las aspas, el límite superior que nos importa es el
     ; de las aspas.
     ;
-    .check_normal_arriba_aspa_lateral:
+    .check_normal_arriba_aspa_horizontal:
     ; Si estamos en las aspas laterales, no permitimos ningun movimiento hacia
     ; arriba en la primera fila.
     ;
@@ -89,21 +91,23 @@ cargar_movimientos_oficial:
     mov byte [array_movimientos_posibles + rcx], r11b
     inc rcx
 
+    ; ========== ABAJO ==========
+    ;
     .check_limites_abajo:
     ; de nuevo, primero verificamos si estamos en una posicion donde tenemos
     ; condiciones especiales para el movimiento en cuestión (en las aspas
     ; horizontales para el caso de movimientos hacia abajo).
     ;
     cmp r9, 2
-    jl .check_normal_abajo_aspa_lateral
+    jl .check_normal_abajo_aspa_horizontal
     cmp r9, 4
-    jg .check_normal_abajo_aspa_lateral
+    jg .check_normal_abajo_aspa_horizontal
     jmp .check_captura_abajo
 
     ; en el caso de estar en las aspas, el límite inferior que nos importa es el
     ; de las aspas.
     ;
-    .check_normal_abajo_aspa_lateral:
+    .check_normal_abajo_aspa_horizontal:
     ; Si estamos en las aspas laterales, no permitimos ningun movimiento hacia
     ; abajo en la última fila.
     ;
@@ -153,7 +157,149 @@ cargar_movimientos_oficial:
     mov byte [array_movimientos_posibles + rcx], r11b
     inc rcx
 
+    ; ========== IZQUIERDA ==========
+    ;
     .check_limites_izquierda:
+    ; verificamos si estamos en una fila donde tenemos condiciones especiales
+    ; (en las aspas verticales para movimientos laterales)
+    ;
+    cmp r8, 2 ; r8 tiene la fila actual
+    jl .check_normal_izquierda_aspa_vertical
+    cmp r8, 4
+    jg .check_normal_izquierda_aspa_vertical
+    jmp .check_captura_izquierda
+
+    .check_normal_izquierda_aspa_vertical:
+    ; Si estamos en las aspas verticales, no permitimos movimiento hacia
+    ; la izquierda en la columna más a la izquierda
+    ;
+    cmp r9, 2
+    je .check_limites_derecha
+
+    ; si estamos en la segunda columna desde la izquierda no permitimos
+    ; movimientos de captura hacia la izquierda
+    ;
+    cmp r9, 3
+    je .check_normal_izquierda
+
+    .check_captura_izquierda:
+    ; verificar si hay un soldado directamente a la izquierda
+    mov r11, rdi
+    dec r11 ; la casilla de la izquierda a la actual
+
+    cmp byte [tablero + r11], 'X'
+    jne .check_normal_izquierda
+
+    ; para captura, verificar la siguiente posición
+    dec r11 ; r11 ahora tiene la posición después del salto sobre el soldado
+
+    ; verificar que seguimos en la misma fila después del salto
+    mov rax, r11
+    mov rcx, 7
+    xor rdx, rdx
+    div rcx
+    cmp rax, r8 ; comparamos la fila nueva con la fila actual
+    jne .check_normal_izquierda ; si no es la misma fila, el movimiento no es válido
+
+    ; verificar que la posición de salto está vacía
+    cmp byte [tablero + r11], ' '
+    jne .check_limites_derecha
+
+    mov byte [array_movimientos_posibles + rcx], r11b
+    inc rcx
+    jmp .check_limites_derecha
+
+    .check_normal_izquierda:
+    ; verificar si la casilla a la izquierda está vacía
+    mov r11, rdi
+    dec r11
+
+    ; verificar que seguimos en la misma fila
+    push rcx
+    mov rax, r11
+    mov rcx, 7
+    xor rdx, rdx
+    div rcx
+    cmp rax, r8 ; comparamos la fila nueva con la fila actual
+    pop rcx
+    jne .check_limites_derecha ; si no es la misma fila, el movimiento no es válido
+
+    cmp byte [tablero + r11], ' '
+    jne .check_limites_derecha
+    mov byte [array_movimientos_posibles + rcx], r11b
+    inc rcx
+
+    ; ========== DERECHA ==========
+    ;
+    .check_limites_derecha:
+    ; verificamos si estamos en una fila donde tenemos condiciones especiales
+    ; (en las aspas verticales para movimientos laterales)
+    ;
+    cmp r8, 2 ; r8 tiene la fila actual
+    jl .check_normal_derecha_aspa_vertical
+    cmp r8, 4
+    jg .check_normal_derecha_aspa_vertical
+    jmp .check_captura_derecha
+
+    .check_normal_derecha_aspa_vertical:
+    ; Si estamos en las aspas verticales, no permitimos movimiento hacia
+    ; la derecha en la columna más a la derecha
+    ;
+    cmp r9, 4
+    je .finalizar
+
+    ; si estamos en la penúltima columna desde la derecha no permitimos
+    ; movimientos de captura hacia la derecha
+    ;
+    cmp r9, 3
+    je .check_normal_derecha
+
+    .check_captura_derecha:
+    ; verificar si hay un soldado directamente a la derecha
+    mov r11, rdi
+    inc r11 ; la casilla de la derecha a la actual
+
+    cmp byte [tablero + r11], 'X'
+    jne .check_normal_derecha
+
+    ; para captura, verificar la siguiente posición
+    inc r11 ; r11 ahora tiene la posición después del salto sobre el soldado
+
+    ; verificar que seguimos en la misma fila después del salto
+    mov rax, r11
+    mov rcx, 7
+    xor rdx, rdx
+    div rcx
+    cmp rax, r8 ; comparamos la fila nueva con la fila actual
+    jne .check_normal_derecha ; si no es la misma fila, el movimiento no es válido
+
+    ; verificar que la posición de salto está vacía
+    cmp byte [tablero + r11], ' '
+    jne .finalizar
+
+    mov byte [array_movimientos_posibles + rcx], r11b
+    inc rcx
+    jmp .finalizar
+
+    .check_normal_derecha:
+    ; verificar si la casilla a la derecha está vacía
+    mov r11, rdi
+    inc r11
+
+    ; verificar que seguimos en la misma fila
+    push rcx
+    mov rax, r11
+    mov rcx, 7
+    xor rdx, rdx
+    div rcx
+    cmp rax, r8 ; comparamos la fila nueva con la fila actual
+    pop rcx
+    jne .finalizar ; si no es la misma fila, el movimiento no es válido
+
+    cmp byte [tablero + r11], ' '
+    jne .finalizar
+    mov byte [array_movimientos_posibles + rcx], r11b
+    inc rcx
 
     .finalizar:
     mov r8, 9
