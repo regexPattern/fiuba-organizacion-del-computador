@@ -28,6 +28,10 @@
     db 10,0x1b,"[38;5;231;48;5;31m",%1,0x1b,"[0m",10,0
     %endmacro
 
+    %macro MENSAJE_ELEGIR_TURNO 1
+    db 10,0x1b,"[38;5;231;48;5;22m",%1,0x1b,"[0m",10,0
+    %endmacro
+
     section .data
 
     msg_turno_soldado MENSAJE_RESALTADO " Turno del soldado "
@@ -39,11 +43,14 @@
     msg_err_celda_invalida MENSAJE_ERROR " Celda ingresada es inválida - Vuelva a ingresar "
     msg_err_sin_movimientos MENSAJE_ERROR " Ficha seleccionada no tiene movimientos posibles - Elija otra ficha "
     msg_oficial_capturado MENSAJE_RESALTADO " ¡Oficial omitió su captura! "
+    msg_elegir_turno MENSAJE_ELEGIR_TURNO " ¿ Quien mueve primero: Oficiales(1) o Soldados(2) ?"
 
     ansi_limpiar_pantalla db 0x1b,"[2J",0x1b,"[H",0
     msg_continuar_juego db 10,"¿Continuar en el juego? [Y/n]: ",0
 
     input_salir_del_juego db " %c",0
+    input_elegir_primer_jugador db " %c",0
+    prueba db 10,"AAA",0
 
     section .bss
 
@@ -53,12 +60,12 @@
     buffer_salir_del_juego resb 1 ; guarda el valor de la respuesta a si se desea salir del juego
     buffer_celda_seleccionada resb 1 ; guarda la celda seleccionada en un turno
     buffer_prox_celda_seleccionada resb 1 ; guarda la celda a la que se va a mover el jugador del turno
+    buffer_elegir_primer_jugador resb 1 ; guarda el valor de la respuesta de que jugador empieza
 
     section .text
 
 main:
     mov byte [juego_activo], 1 ; iniciamos el juego
-    mov byte [es_turno_soldado], 0 ; inicia con el turno del soldado
 
     call tablero_inicializar ; cargamos el estado inicial del tablero
 
@@ -72,7 +79,7 @@ main:
     ; renderizamos el tablero sin selecciones
     mov rdi, 0
     call tablero_renderizar
-
+    call elegir_turno
     .inicio_ejecucion_turno: ; <====== acá se regresa en caso de input inválida
     call mostrar_msg_turno
     call seleccionar_celda
@@ -286,4 +293,30 @@ mostrar_msg_continuar_juego:
     mov rsi, buffer_salir_del_juego
     call scanf
 
+    ret
+
+elegir_turno:
+    mov rdi, msg_elegir_turno
+    call printf
+
+    mov rdi, 0
+    call fflush
+
+    mov rdi, input_elegir_primer_jugador
+    mov rsi, buffer_elegir_primer_jugador
+    call scanf
+
+    cmp byte [buffer_elegir_primer_jugador], "2"
+    je empiezan_los_soldados
+    cmp byte [buffer_elegir_primer_jugador], "1"
+    je empiezan_los_oficiales
+
+    ret
+
+empiezan_los_soldados:
+    mov byte [es_turno_soldado], 1
+    ret
+
+empiezan_los_oficiales:
+    mov byte [es_turno_soldado], 0
     ret
