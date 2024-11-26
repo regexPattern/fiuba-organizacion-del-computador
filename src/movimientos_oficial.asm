@@ -6,6 +6,19 @@
 
     %define CANTIDAD_COLUMNAS 7
 
+    section .bss
+    pos_oficial_1 resb 1      ; Posición del oficial 1
+    pos_oficial_2 resb 1      ; Posición del oficial 2
+    movimientos_oficial1 resb 1 ; Contador de movimientos para el Oficial 1
+    movimientos_oficial2 resb 1 ; Contador de movimientos para el Oficial 2
+    capturas_oficial1 resb 1  ; Contador de capturas para el Oficial 1
+    capturas_oficial2 resb 1  ; Contador de capturas para el Oficial 2
+
+    section .data
+    mensaje_estadisticas db "Estadísticas del juego:", 0
+    mensaje_oficial_1 db "Estadísticas del Oficial 1:", 0
+    mensaje_oficial_2 db "Estadísticas del Oficial 2:", 0
+
     section .text
 
     ; actualiza el `array_movimientos_posibles` con los índices de las celdas a las
@@ -579,7 +592,7 @@ efectuar_movimiento_oficial:
     ; tenía un movimiento de captura.
     ;
     sub bl, dil ; dil = índice absoluto de la posición actual (para encontrar el offset)
-                ; este calculo me calcula el offset (con signo)
+    ; este calculo me calcula el offset (con signo)
     test bl, bl
     jge .distancia_absoluta_celdas
     neg bl

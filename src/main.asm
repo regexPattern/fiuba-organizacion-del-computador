@@ -1,6 +1,7 @@
     global main
 
     extern fflush
+    extern fopen
     extern printf
     extern scanf
 
@@ -28,12 +29,19 @@
     db 10,0x1b,"[38;5;231;48;5;31m",%1,0x1b,"[0m",10,0
     %endmacro
 
-    %macro MENSAJE_ELEGIR_TURNO 1
+    %macro MENSAJE_PREGUNTA_INICIO 1
     db 10,0x1b,"[38;5;231;48;5;22m",%1,0x1b,"[0m",10,0
     %endmacro
 
     section .data
 
+    msg_titulo db 10,0x1b,"[2J",0x1b,"[H"
+               db "███████╗██╗        █████╗ ███████╗ █████╗ ██╗  ████████╗ ██████╗ ",10
+               db "██╔════╝██║       ██╔══██╗██╔════╝██╔══██╗██║  ╚══██╔══╝██╔═══██╗",10
+               db "█████╗  ██║       ███████║███████╗███████║██║     ██║   ██║   ██║",10
+               db "██╔══╝  ██║       ██╔══██║╚════██║██╔══██║██║     ██║   ██║   ██║",10
+               db "███████╗███████╗  ██║  ██║███████║██║  ██║███████╗██║   ╚██████╔╝",10
+               db "╚══════╝╚══════╝  ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚══════╝╚═╝    ╚═════╝ ",10,0
     msg_turno_soldado MENSAJE_RESALTADO " Turno del soldado "
     msg_turno_oficial MENSAJE_RESALTADO " Turno del oficial "
     msg_ganador_soldados_fortaleza_llena MENSAJE_RESALTADO " ¡Soldados ganan! (Fortaleza capturada) "
@@ -43,14 +51,21 @@
     msg_err_celda_invalida MENSAJE_ERROR " Celda ingresada es inválida - Vuelva a ingresar "
     msg_err_sin_movimientos MENSAJE_ERROR " Ficha seleccionada no tiene movimientos posibles - Elija otra ficha "
     msg_oficial_capturado MENSAJE_RESALTADO " ¡Oficial omitió su captura! "
-    msg_elegir_turno MENSAJE_ELEGIR_TURNO " ¿ Quien mueve primero: Oficiales(1) o Soldados(2) ?"
+    msg_elegir_turno MENSAJE_PREGUNTA_INICIO " ¿Quien mueve primero? (Oficiales=1 o Soldados=2) "
+    msg_err_seleccion MENSAJE_ERROR " Opción seleccionada no es válida "
+    msg_partida_anterior_encontrada MENSAJE_PREGUNTA_INICIO " ¿Continuar partida anterior? (Si=1 o Nueva Partida=2) "
+    msg_seleccion_opcion db 10," - Seleccione una opción: ",0
 
     ansi_limpiar_pantalla db 0x1b,"[2J",0x1b,"[H",0
     msg_continuar_juego db 10,"¿Continuar en el juego? [Y/n]: ",0
 
     input_salir_del_juego db " %c",0
     input_elegir_primer_jugador db " %c",0
-    prueba db 10,"AAA",0
+    input_cargar_partida db " %c",0
+
+    path_archivo_partida db "partida.dat",0
+    modo_lectura_archivo_partida db "rb",0
+    modo_escritura_archivo_partida db "wb",0
 
     section .bss
 
@@ -61,13 +76,24 @@
     buffer_celda_seleccionada resb 1 ; guarda la celda seleccionada en un turno
     buffer_prox_celda_seleccionada resb 1 ; guarda la celda a la que se va a mover el jugador del turno
     buffer_elegir_primer_jugador resb 1 ; guarda el valor de la respuesta de que jugador empieza
+    buffer_cargar_partida resb 1 ; guardar el valor de la respuesta de la carga de partida anterior
+
+    file_desc_archivo_partida resq 1 ; file descriptor archivo partida
 
     section .text
 
 main:
     mov byte [juego_activo], 1 ; iniciamos el juego
 
+    mov rdi, msg_titulo
+    sub rsp, 8
+    call printf
+    add rsp, 8
+
+    call cargar_partida
+
     call tablero_inicializar ; cargamos el estado inicial del tablero
+    call elegir_turno
 
     .game_loop: ; <===== inicio de un turno
     ; limpiamos la pantalla en cada render
@@ -79,7 +105,6 @@ main:
     ; renderizamos el tablero sin selecciones
     mov rdi, 0
     call tablero_renderizar
-    call elegir_turno
     .inicio_ejecucion_turno: ; <====== acá se regresa en caso de input inválida
     call mostrar_msg_turno
     call seleccionar_celda
@@ -295,28 +320,66 @@ mostrar_msg_continuar_juego:
 
     ret
 
+cargar_partida:
+    mov rdi, path_archivo_partida
+    mov rsi, modo_lectura_archivo_partida
+    call fopen
+
+    cmp rax, 0 ; en este caso no se abrió el archivo
+    je .nueva_partida
+
+    mov rdi, msg_partida_anterior_encontrada
+    call printf
+
+    .seleccion_opcion:
+    mov rdi, msg_seleccion_opcion
+    call printf
+
+    mov rdi, input_cargar_partida
+    mov rsi, buffer_cargar_partida
+    call scanf
+
+    mov al, byte [buffer_cargar_partida]
+    cmp al, "1"
+    je .cargar_partida_anterior
+    cmp al, "2"
+    je .nueva_partida
+
+    mov rdi, msg_err_seleccion
+    call printf
+    jmp .seleccion_opcion
+
+    .cargar_partida_anterior:
+
+    .nueva_partida:
+
+    ret
+
 elegir_turno:
     mov rdi, msg_elegir_turno
     call printf
 
-    mov rdi, 0
-    call fflush
+    .seleccion_opcion:
+    mov rdi, msg_seleccion_opcion
+    call printf
 
     mov rdi, input_elegir_primer_jugador
     mov rsi, buffer_elegir_primer_jugador
     call scanf
 
     cmp byte [buffer_elegir_primer_jugador], "2"
-    je empiezan_los_soldados
+    je .empiezan_los_soldados
     cmp byte [buffer_elegir_primer_jugador], "1"
-    je empiezan_los_oficiales
+    je .empiezan_los_oficiales
 
-    ret
+    mov rdi, msg_err_seleccion
+    call printf
+    jmp .seleccion_opcion
 
-empiezan_los_soldados:
+    .empiezan_los_soldados:
     mov byte [es_turno_soldado], 1
     ret
 
-empiezan_los_oficiales:
+    .empiezan_los_oficiales:
     mov byte [es_turno_soldado], 0
     ret
