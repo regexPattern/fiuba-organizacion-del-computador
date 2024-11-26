@@ -1,4 +1,5 @@
     global cargar_movimientos_oficial
+    global definir_posiciones_iniciales_oficiales
     global efectuar_movimiento_oficial
 
     extern array_movimientos_posibles
@@ -7,17 +8,26 @@
     %define CANTIDAD_COLUMNAS 7
 
     section .bss
-    pos_oficial_1 resb 1      ; Posición del oficial 1
-    pos_oficial_2 resb 1      ; Posición del oficial 2
     movimientos_oficial1 resb 1 ; Contador de movimientos para el Oficial 1
     movimientos_oficial2 resb 1 ; Contador de movimientos para el Oficial 2
     capturas_oficial1 resb 1  ; Contador de capturas para el Oficial 1
     capturas_oficial2 resb 1  ; Contador de capturas para el Oficial 2
 
+    ptr_pos_oficial_actual resq 1
+    ptr_cant_capturas_oficial_actual resq 1
+    ptr_cant_movimientos_oficial_actual resq 1
+
     section .data
     mensaje_estadisticas db "Estadísticas del juego:", 0
     mensaje_oficial_1 db "Estadísticas del Oficial 1:", 0
     mensaje_oficial_2 db "Estadísticas del Oficial 2:", 0
+    
+    pos_oficial_1 db 39
+    pos_oficial_2 db 44
+    cant_capturas_oficial_1 db 0
+    cant_capturas_oficial_2 db 0
+    cant_movimientos_oficial_1 db 0
+    cant_movimientos_oficial_2 db 0
 
     section .text
 
@@ -523,7 +533,32 @@ cargar_movimientos_oficial:
     ; * ambos parámetros se asumen como ya validados
     ;
 efectuar_movimiento_oficial:
-    ; primero hacemos el movimiento (sabemos que es válido)
+    ; primero detectamos que oficial estamos moviendo
+    .moviendo_oficial_1:
+    cmp dil, byte [pos_oficial_1]
+    jne .moviendo_oficial_2
+
+    mov qword [ptr_pos_oficial_actual], pos_oficial_1
+    mov qword [ptr_cant_capturas_oficial_actual], cant_capturas_oficial_1
+    mov qword [ptr_cant_movimientos_oficial_actual], cant_movimientos_oficial_1
+
+    jmp .incrementar_movimientos_oficial
+
+    .moviendo_oficial_2:
+    mov qword [ptr_pos_oficial_actual], pos_oficial_2
+    mov qword [ptr_cant_capturas_oficial_actual], cant_capturas_oficial_2
+    mov qword [ptr_cant_movimientos_oficial_actual], cant_movimientos_oficial_2
+
+    .incrementar_movimientos_oficial:
+    ; una vez ya sabemos a que oficial nos referimos, incrementamos la cantidad
+    ; de movimientos (esta función siempre mueve al oficial, aunque sea
+    ; retirado del tablero, igual cuenta como movimiento).
+    mov rbp, [ptr_cant_movimientos_oficial_actual]
+    mov al, byte [rbp]
+    inc al
+    mov byte [rbp], al
+
+    ; luego hacemos el movimiento (sabemos que es válido)
     mov r8b, [tablero + rdi]
     mov byte [tablero + rdi], ' '
     mov byte [tablero + rsi], r8b
@@ -622,6 +657,12 @@ efectuar_movimiento_oficial:
 
     add rdi, rbx ; offset
     mov byte [tablero + rdi], ' '
+
+    ; incrementamos la estadística de captura del oficial
+    mov rbp, [ptr_cant_capturas_oficial_actual]
+    mov al, byte [rbp]
+    inc al
+    mov byte [rbp], al
 
     .finalizar:
 
