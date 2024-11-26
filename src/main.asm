@@ -65,7 +65,7 @@
 
     path_archivo_partida db "partida.dat",0
     modo_lectura_archivo_partida db "rb",0
-    modo_escritura_archivo_partida db "wb",0
+    modo_escritura_archivo_partida db "wb+",0
 
     section .bss
 
@@ -350,8 +350,15 @@ cargar_partida:
     jmp .seleccion_opcion
 
     .cargar_partida_anterior:
+    ; TODO: tengo que leer el archivo, y luego cargarlo todo en un buffer, y
+    ; luego cerrarlo, ya cuando vaya a guardar la partida lo abro y lo cierro
+    ; de nuevo
 
     .nueva_partida:
+    ; en este caso no se abrio el archivo, asi que no es necesario hacer un fclose
+    mov rdi, path_archivo_partida
+    mov rsi, modo_escritura_archivo_partida
+    call fopen
 
     ret
 
