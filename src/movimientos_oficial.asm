@@ -26,8 +26,8 @@
     pos_oficial_2 db 44
     cant_capturas_oficial_1 db 0
     cant_capturas_oficial_2 db 0
-    cant_movimientos_oficial_1 db 0
-    cant_movimientos_oficial_2 db 0
+    cant_movimientos_oficial_1 times 16 db 0 ; ↖,↑,↗,_,_,_,_,←,_,→,_,_,_,_,↙,↓,↘
+    cant_movimientos_oficial_2 times 16 db 0
 
     section .text
 
@@ -49,7 +49,7 @@ cargar_movimientos_oficial:
 
     xor rcx, rcx ; rcx = índice del array
 
-    ; ========== ARRIBA ==========
+    ; ========== ↑ ARRIBA ↑ ==========
     ;
     .check_limites_arriba:
     ; si estamos en una columa entre la 2 y la 4 (inclusive) significa que no
@@ -114,7 +114,7 @@ cargar_movimientos_oficial:
     mov byte [array_movimientos_posibles + rcx], r11b
     inc rcx
 
-    ; ========== ABAJO ==========
+    ; ========== ↓ ABAJO ↓ ==========
     ;
     .check_limites_abajo:
     ; de nuevo, primero verificamos si estamos en una posicion donde tenemos
@@ -180,7 +180,7 @@ cargar_movimientos_oficial:
     mov byte [array_movimientos_posibles + rcx], r11b
     inc rcx
 
-    ; ========== IZQUIERDA ==========
+    ; ========== ← IZQUIERDA ← ==========
     ;
     .check_limites_izquierda:
     ; verificamos si estamos en una fila donde tenemos condiciones especiales
@@ -256,7 +256,7 @@ cargar_movimientos_oficial:
     mov byte [array_movimientos_posibles + rcx], r11b
     inc rcx
 
-    ; ========== DERECHA ==========
+    ; ========== → DERECHA → ==========
     ;
     .check_limites_derecha:
     ; verificamos si estamos en una fila donde tenemos condiciones especiales
@@ -332,7 +332,7 @@ cargar_movimientos_oficial:
     mov byte [array_movimientos_posibles + rcx], r11b
     inc rcx
 
-    ; ========== DIAGONAL ARRIBA IZQUIERDA ==========
+    ; ========== ↖ DIAGONAL ARRIBA IZQUIERDA ↖ ==========
     ;
     .check_limites_diagonal_arriba_izquierda:
     mov r11, rdi
@@ -381,7 +381,7 @@ cargar_movimientos_oficial:
     mov byte [array_movimientos_posibles + rcx], r11b
     inc rcx
 
-    ; ========== DIAGONAL ARRIBA DERECHA ==========
+    ; ========== ↗ DIAGONAL ARRIBA DERECHA ↗ ==========
     ;
     .check_limites_diagonal_arriba_derecha:
     mov r11, rdi
@@ -423,7 +423,7 @@ cargar_movimientos_oficial:
     mov byte [array_movimientos_posibles + rcx], r11b
     inc rcx
 
-    ; ========== DIAGONAL ABAJO DERECHA ==========
+    ; ========== ↙ DIAGONAL ABAJO DERECHA ↙ ==========
     .check_limites_diagonal_abajo_derecha:
     mov r11, rdi
     add r11, 8
@@ -464,7 +464,7 @@ cargar_movimientos_oficial:
     mov byte [array_movimientos_posibles + rcx], r11b
     inc rcx
 
-    ; ========== DIAGONAL ABAJO IZQUIERDA ==========
+    ; ========== ↘ DIAGONAL ABAJO IZQUIERDA ↘ ==========
     .check_limites_diagonal_abajo_izquierda:
     mov r11, rdi
     add r11, 6
@@ -552,11 +552,17 @@ efectuar_movimiento_oficial:
     .incrementar_movimientos_oficial:
     ; una vez ya sabemos a que oficial nos referimos, incrementamos la cantidad
     ; de movimientos (esta función siempre mueve al oficial, aunque sea
-    ; retirado del tablero, igual cuenta como movimiento).
+    ; retirado del tablero, igual cuenta como movimiento). para eso tenemos que
+    ; saber en que direccion nos movemos
+    ;
+    mov r8, rsi
+    sub r8, rdi ; nueva pos - posicion actual (ej.: -1 = mov izq, +8 = mov diagonal abajo izq)
+    add r8, 8 ; para calcular el offset (slider) del arreglo de movimientos
+
     mov rbp, [ptr_cant_movimientos_oficial_actual]
-    mov al, byte [rbp]
+    mov al, byte [rbp + r8]
     inc al
-    mov byte [rbp], al
+    mov byte [rbp + r8], al
 
     ; luego hacemos el movimiento (sabemos que es válido)
     mov r8b, [tablero + rdi]
@@ -665,6 +671,9 @@ efectuar_movimiento_oficial:
     mov byte [rbp], al
 
     .finalizar:
+    ; actualizamos el registro guardado de la pos del oficial
+    mov rbp, [ptr_pos_oficial_actual]
+    mov byte [rbp], sil
 
     ret
 
