@@ -1,33 +1,42 @@
+    extern printf
+
     global cargar_movimientos_oficial
     global definir_posiciones_iniciales_oficiales
     global efectuar_movimiento_oficial
+    global mostrar_estadisticas
 
     extern array_movimientos_posibles
     extern tablero
 
     %define CANTIDAD_COLUMNAS 7
 
-    section .bss
-    movimientos_oficial1 resb 1 ; Contador de movimientos para el Oficial 1
-    movimientos_oficial2 resb 1 ; Contador de movimientos para el Oficial 2
-    capturas_oficial1 resb 1  ; Contador de capturas para el Oficial 1
-    capturas_oficial2 resb 1  ; Contador de capturas para el Oficial 2
+    %macro MENSAJE_RESALTADO 1
+    db 10,0x1b,"[38;5;231;48;5;9m",%1,0x1b,"[0m",10,0
+    %endmacro
 
+    section .bss
     ptr_pos_oficial_actual resq 1
     ptr_cant_capturas_oficial_actual resq 1
     ptr_cant_movimientos_oficial_actual resq 1
 
     section .data
-    mensaje_estadisticas db "Estadísticas del juego:", 0
-    mensaje_oficial_1 db "Estadísticas del Oficial 1:", 0
-    mensaje_oficial_2 db "Estadísticas del Oficial 2:", 0
+    msg_oficial_1 MENSAJE_RESALTADO " Oficial 1 "
+    msg_oficial_2 MENSAJE_RESALTADO " Oficial 2 "
+    msg_cantidad_movimientos db 10,"  - Arriba...................%d",10
+                                db "  - Abajo....................%d",10
+                                db "  - Izquierda................%d",10
+                                db "  - Derecha..................%d",10
+                                db "  - Diag. Arriba Izquierda...%d",10
+                                db "  - Diag. Arriba Derecha.....%d",10
+                                db "  - Diag. Abajo Izquierda....%d",10
+                                db "  - Diag. Abajo Derecha......%d",10,0
     
     pos_oficial_1 db 39
     pos_oficial_2 db 44
     cant_capturas_oficial_1 db 0
     cant_capturas_oficial_2 db 0
-    cant_movimientos_oficial_1 times 16 db 0 ; ↖,↑,↗,_,_,_,_,←,_,→,_,_,_,_,↙,↓,↘
-    cant_movimientos_oficial_2 times 16 db 0
+    cant_movimientos_oficial_1 times 17 db 0 ; ↖,↑,↗,_,_,_,_,←,_,→,_,_,_,_,↙,↓,↘
+    cant_movimientos_oficial_2 times 17 db 0
 
     section .text
 
@@ -706,4 +715,32 @@ calcular_distancia_entre_celdas:
     neg rbx
 
     .finalizar:
+    ret
+
+mostrar_estadisticas:
+    ; TODO: quiza sea bueno guardar un -1 o 0 en la posicion final del oficial
+    ; para indicar que fue retirado, puede ayudar a mostrar esta stat y a la
+    ; carga en el archivo
+
+    .oficial_1:
+    mov rdi, msg_oficial_1
+    call printf
+
+    mov rdi, msg_cantidad_movimientos
+    movzx rsi, byte [cant_movimientos_oficial_1] ; ↖
+    movzx rdx, byte [cant_movimientos_oficial_1 + 14] ; ↑
+    movzx rcx, byte [cant_movimientos_oficial_1 + 15] ; ↗
+    movzx r8, byte [cant_movimientos_oficial_1 + 16] ; ←
+    movzx r9, byte [cant_movimientos_oficial_1 + 9] ; →
+    movzx rax, byte [cant_movimientos_oficial_1 + 16] ; ↘
+    push rax
+    movzx rax, byte [cant_movimientos_oficial_1 + 15] ; ↓
+    push rax
+    movzx rax, byte [cant_movimientos_oficial_1 + 14] ; ↙
+    push rax
+
+    sub rsp, 8
+    call printf
+    add rsp, 32
+
     ret

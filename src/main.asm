@@ -19,7 +19,7 @@
     extern tablero_inicializar
     extern tablero_renderizar
     extern tablero_actualizar
-    extern encontrar_ganador
+    extern mostrar_estadisticas
 
     %macro MENSAJE_RESALTADO 1
     db 10,0x1b,"[38;5;231;48;5;9m",%1,0x1b,"[0m",10,0
@@ -42,12 +42,18 @@
                db "██╔══╝  ██║       ██╔══██║╚════██║██╔══██║██║     ██║   ██║   ██║",10
                db "███████╗███████╗  ██║  ██║███████║██║  ██║███████╗██║   ╚██████╔╝",10
                db "╚══════╝╚══════╝  ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚══════╝╚═╝    ╚═════╝ ",10,0
+    msg_fin db 10
+            db "███████╗██╗███╗   ██╗",10
+            db "██╔════╝██║████╗  ██║",10
+            db "█████╗  ██║██╔██╗ ██║",10
+            db "██╔══╝  ██║██║╚██╗██║",10
+            db "██║     ██║██║ ╚████║",10
+            db "╚═╝     ╚═╝╚═╝  ╚═══╝",10,0
     msg_turno_soldado MENSAJE_RESALTADO " Turno del soldado "
     msg_turno_oficial MENSAJE_RESALTADO " Turno del oficial "
     msg_ganador_soldados_fortaleza_llena MENSAJE_RESALTADO " ¡Soldados ganan! (Fortaleza capturada) "
     msg_ganador_soldados_oficiales_rodeados MENSAJE_RESALTADO " ¡Soldados ganan! (Oficiales inmobilizados) "
     msg_ganador_oficiales MENSAJE_RESALTADO " ¡Oficiales ganan! (Soldados diezmados) "
-    msg_fin MENSAJE_RESALTADO " El juego ha terminado "
     msg_err_celda_invalida MENSAJE_ERROR " Celda ingresada es inválida - Vuelva a ingresar "
     msg_err_sin_movimientos MENSAJE_ERROR " Ficha seleccionada no tiene movimientos posibles - Elija otra ficha "
     msg_oficial_capturado MENSAJE_RESALTADO " ¡Oficial omitió su captura! "
@@ -55,6 +61,7 @@
     msg_err_seleccion MENSAJE_ERROR " Opción seleccionada no es válida "
     msg_partida_anterior_encontrada MENSAJE_PREGUNTA_INICIO " ¿Continuar partida anterior? (Si=1 o Nueva Partida=2) "
     msg_seleccion_opcion db 10," - Seleccione una opción: ",0
+    msg_estadisticas MENSAJE_RESALTADO " Estadísticas del juego "
 
     ansi_limpiar_pantalla db 0x1b,"[2J",0x1b,"[H",0
     msg_continuar_juego db 10,"¿Continuar en el juego? [Y/n]: ",0
@@ -238,6 +245,13 @@ main:
 
     .finalizar:
     call tablero_finalizar
+
+    mov rdi, msg_estadisticas
+    sub rsp, 8
+    call printf
+    add rsp, 8
+
+    call mostrar_estadisticas
 
     mov rdi, msg_fin
     sub rsp, 8
