@@ -10,6 +10,7 @@
     extern scanf
 
     extern array_movimientos_posibles
+    extern buffer_posicion_fortaleza
     extern cargar_movimientos_oficial
     extern cargar_movimientos_soldado
     extern efectuar_movimiento_oficial
@@ -40,39 +41,43 @@
     section .data
 
     msg_titulo db 10,0x1b,"[2J",0x1b,"[H"
-               db "███████╗██╗        █████╗ ███████╗ █████╗ ██╗  ████████╗ ██████╗ ",10
-               db "██╔════╝██║       ██╔══██╗██╔════╝██╔══██╗██║  ╚══██╔══╝██╔═══██╗",10
-               db "█████╗  ██║       ███████║███████╗███████║██║     ██║   ██║   ██║",10
-               db "██╔══╝  ██║       ██╔══██║╚════██║██╔══██║██║     ██║   ██║   ██║",10
-               db "███████╗███████╗  ██║  ██║███████║██║  ██║███████╗██║   ╚██████╔╝",10
-               db "╚══════╝╚══════╝  ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚══════╝╚═╝    ╚═════╝ ",10,0
-    msg_fin db 10
-            db "███████╗██╗███╗   ██╗",10
-            db "██╔════╝██║████╗  ██║",10
-            db "█████╗  ██║██╔██╗ ██║",10
-            db "██╔══╝  ██║██║╚██╗██║",10
-            db "██║     ██║██║ ╚████║",10
-            db "╚═╝     ╚═╝╚═╝  ╚═══╝",10,0
-    msg_turno_soldado MENSAJE_RESALTADO " Turno del soldado "
-    msg_turno_oficial MENSAJE_RESALTADO " Turno del oficial "
-    msg_ganador_soldados_fortaleza_llena MENSAJE_RESALTADO " ¡Soldados ganan! (Fortaleza capturada) "
-    msg_ganador_soldados_oficiales_rodeados MENSAJE_RESALTADO " ¡Soldados ganan! (Oficiales inmobilizados) "
-    msg_ganador_oficiales MENSAJE_RESALTADO " ¡Oficiales ganan! (Soldados diezmados) "
+    db "███████╗██╗        █████╗ ███████╗ █████╗ ██╗  ████████╗ ██████╗ ",10
+    db "██╔════╝██║       ██╔══██╗██╔════╝██╔══██╗██║  ╚══██╔══╝██╔═══██╗",10
+    db "█████╗  ██║       ███████║███████╗███████║██║     ██║   ██║   ██║",10
+    db "██╔══╝  ██║       ██╔══██║╚════██║██╔══██║██║     ██║   ██║   ██║",10
+    db "███████╗███████╗  ██║  ██║███████║██║  ██║███████╗██║   ╚██████╔╝",10
+    db "╚══════╝╚══════╝  ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚══════╝╚═╝    ╚═════╝ ",10,0
+
+    msg_continuar_partida_anterior db 10,"¿Continuar partida anterior? [Y/n]: ",0
+    msg_personalizacion MENSAJE_RESALTADO " Personalizá tu partida "
+
+    msg_elegir_primer_jugador db 10,0x1b,"[1m"," • ¿Quién mueve primero? [1: oficiales | 2: soldados]: ",0x1b,"[0m",0
+    msg_elegir_simbolos_oficiales db 10,0x1b,"[1m"," • Ingresá el símbolo para los oficiales: ",0x1b,"[0m",0
+    msg_elegir_simbolos_soldados db 10,0x1b,"[1m"," • Ingresá el símbolo para los soldados: ",0x1b,"[0m",0
+    msg_elegir_posicion_fortaleza db 10,0x1b,"[1m"," • ¿En qué posición querés ubicar la fortaleza? [^: arriba | v: abajo]: ",0x1b,"[0m",0
+
+    msg_seleccion_opcion db 10," - Seleccione una opción: ",0
+    msg_err_seleccion MENSAJE_ERROR " Opción seleccionada no es válida "
+
+    msg_turno_soldado MENSAJE_RESALTADO " Turno de los soldados "
+    msg_turno_oficial MENSAJE_RESALTADO " Turno de los oficiales "
     msg_err_celda_invalida MENSAJE_ERROR " Celda ingresada es inválida - Vuelva a ingresar "
     msg_err_sin_movimientos MENSAJE_ERROR " Ficha seleccionada no tiene movimientos posibles - Elija otra ficha "
     msg_oficial_capturado MENSAJE_RESALTADO " ¡Oficial omitió su captura! "
-    msg_elegir_turno MENSAJE_PREGUNTA_INICIO " ¿Quien mueve primero? (Oficiales=1 o Soldados=2) "
-    msg_err_seleccion MENSAJE_ERROR " Opción seleccionada no es válida "
-    msg_partida_anterior_encontrada MENSAJE_PREGUNTA_INICIO " ¿Continuar partida anterior? (Si=1 o Nueva Partida=2) "
-    msg_seleccion_opcion db 10," - Seleccione una opción: ",0
+    msg_continuar_partida_actual db 10,"¿Continuar en el juego? [Y/n]: ",0
+
+    msg_ganador_soldados_fortaleza_llena MENSAJE_RESALTADO " ¡Soldados ganan! (Fortaleza capturada) "
+    msg_ganador_soldados_oficiales_rodeados MENSAJE_RESALTADO " ¡Soldados ganan! (Oficiales inmobilizados) "
+    msg_ganador_oficiales MENSAJE_RESALTADO " ¡Oficiales ganan! (Soldados diezmados) "
     msg_estadisticas MENSAJE_RESALTADO " Estadísticas del juego "
 
     ansi_limpiar_pantalla db 0x1b,"[2J",0x1b,"[H",0
-    msg_continuar_juego db 10,"¿Continuar en el juego? [Y/n]: ",0
 
-    input_salir_del_juego db " %c",0
+    input_cargar_partida_guardada db " %c",0
     input_elegir_primer_jugador db " %c",0
-    input_cargar_partida db " %c",0
+    input_elegir_simbolo db " %c", 0
+    input_elegir_posicion_fortaleza db " %c",0
+    input_continuar_partida_actual db " %c",0
 
     path_archivo_partida db "partida.dat",0
     modo_lectura_archivo_partida db "rb",0
@@ -80,16 +85,18 @@
 
     section .bss
 
-    juego_activo resb 1 ; bandera para saber si el juego está activo (1 = activo, 0 = terminado)
-    es_turno_soldado resb 1 ; bandera para alternar turnos (1 = soldado, 0 = oficial)
+    juego_activo resb 1                   ; bandera para saber si el juego está activo (1 = activo, 0 = terminado)
+    es_turno_soldado resb 1               ; bandera para alternar turnos (1 = soldado, 0 = oficial)
 
-    buffer_salir_del_juego resb 1 ; guarda el valor de la respuesta a si se desea salir del juego
-    buffer_celda_seleccionada resb 1 ; guarda la celda seleccionada en un turno
-    buffer_prox_celda_seleccionada resb 1 ; guarda la celda a la que se va a mover el jugador del turno
-    buffer_elegir_primer_jugador resb 1 ; guarda el valor de la respuesta de que jugador empieza
-    buffer_cargar_partida resb 1 ; guardar el valor de la respuesta de la carga de partida anterior
+    buffer_cargar_partida resb 1           ; guardar el valor de la respuesta de la carga de partida anterior
+    buffer_elegir_primer_jugador resb 1    ; guarda el valor de la respuesta de que jugador empieza
+    buffer_simbolo_oficiales resb 1        ; guarda el icono de los oficiales
+    buffer_simbolo_soldados resb 1         ; guarda el icono de los soldados
+    buffer_continuar_partida_actual resb 1 ; guarda el valor de la respuesta a si se desea continuar la partida actual o salir del juego
+    buffer_celda_seleccionada resb 1       ; guarda la celda seleccionada en un turno
+    buffer_prox_celda_seleccionada resb 1  ; guarda la celda a la que se va a mover el jugador del turno
 
-    file_desc_archivo_partida resq 1 ; file descriptor archivo partida
+    file_desc_archivo_partida resq 1      ; file descriptor archivo partida
 
     section .text
 
@@ -101,7 +108,7 @@ main:
     call printf
     add rsp, 8
 
-    call cargar_partida
+    call cargar_partida_guardada
 
     call tablero_inicializar ; cargamos el estado inicial del tablero
 
@@ -115,7 +122,8 @@ main:
     ; renderizamos el tablero sin selecciones
     mov rdi, 0
     call tablero_renderizar
-    .inicio_ejecucion_turno: ; <====== acá se regresa en caso de input inválida
+
+    .inicio_ejecucion_turno: ; <====== acá se regresa en caso de input de celda inválida
     call mostrar_msg_turno
     call seleccionar_celda
 
@@ -219,9 +227,9 @@ main:
     xor al, 1
     mov [es_turno_soldado], al
 
-    call mostrar_msg_continuar_juego
+    call mostrar_msg_continuar_partida_actual
 
-    cmp byte [buffer_salir_del_juego], "n"
+    cmp byte [buffer_continuar_partida_actual], "n"
     je .interrumpir_juego ; el usuario explícitamente quiere salir del juego
 
     jmp .game_loop ; avanzamos al siguiente turno (acá el juego sigue en curso)
@@ -264,11 +272,6 @@ main:
     add rsp, 8
 
     call mostrar_estadisticas
-
-    mov rdi, msg_fin
-    sub rsp, 8
-    call printf
-    add rsp, 8
 
     ; exit syscall
     mov rax,60
@@ -322,32 +325,32 @@ mostrar_msg_turno:
     mov rdi, msg_turno_soldado
     jmp .mostrar_msg_turno
 
-.msg_turno_oficiales:
+    .msg_turno_oficiales:
     mov rdi, msg_turno_oficial
 
-.mostrar_msg_turno:
+    .mostrar_msg_turno:
     call printf
 
     ret
 
     ; descripción:
     ; imprime el mensaje para salir del juego y pide la respuesta al usuario
-    ; para almacenarla en `buffer_salir_del_juego`
+    ; para almacenarla en `buffer_continuar_partida_actual`
     ;
-mostrar_msg_continuar_juego:
-    mov rdi, msg_continuar_juego
+mostrar_msg_continuar_partida_actual:
+    mov rdi, msg_continuar_partida_actual
     call printf
 
     mov rdi, 0
     call fflush
 
-    mov rdi, input_salir_del_juego
-    mov rsi, buffer_salir_del_juego
+    mov rdi, input_continuar_partida_actual
+    mov rsi, buffer_continuar_partida_actual
     call scanf
 
     ret
 
-cargar_partida:
+cargar_partida_guardada:
     mov rdi, path_archivo_partida
     mov rsi, modo_lectura_archivo_partida
     call fopen
@@ -360,26 +363,18 @@ cargar_partida:
     ;
     mov [file_desc_archivo_partida], rax
 
-    mov rdi, msg_partida_anterior_encontrada
+    mov rdi, msg_continuar_partida_anterior
     call printf
 
-    .seleccion_opcion:
-    mov rdi, msg_seleccion_opcion
-    call printf
+    mov rdi, 0
+    call fflush
 
-    mov rdi, input_cargar_partida
+    mov rdi, input_cargar_partida_guardada
     mov rsi, buffer_cargar_partida
     call scanf
 
-    mov al, byte [buffer_cargar_partida]
-    cmp al, "1"
-    je .cargar_partida_anterior
-    cmp al, "2"
+    cmp byte [buffer_cargar_partida], "n"
     je .nueva_partida
-
-    mov rdi, msg_err_seleccion
-    call printf
-    jmp .seleccion_opcion
 
     .cargar_partida_anterior:
     ; leemos quien tiene el proximo turno
@@ -413,32 +408,34 @@ cargar_partida:
     mov rdi, path_archivo_partida
     call remove
 
-    sub rsp, 8
-    call elegir_turno
-    add rsp, 8
+    ; iniciamos la personalizacion de la nueva partida
+    mov rdi, msg_personalizacion
+    call printf
+
+    ; sub rsp, 8
+    ; call elegir_primer_jugador
+    ; call elegir_simbolos
+    ; call elegir_posicion_fortaleza
+    ; add rsp, 8
 
     ret
 
-elegir_turno:
-    mov rdi, msg_elegir_turno
-    call printf
-
-    .seleccion_opcion:
-    mov rdi, msg_seleccion_opcion
+elegir_primer_jugador:
+    mov rdi, msg_elegir_primer_jugador
     call printf
 
     mov rdi, input_elegir_primer_jugador
     mov rsi, buffer_elegir_primer_jugador
     call scanf
 
-    cmp byte [buffer_elegir_primer_jugador], "2"
-    je .empiezan_los_soldados
     cmp byte [buffer_elegir_primer_jugador], "1"
     je .empiezan_los_oficiales
+    cmp byte [buffer_elegir_primer_jugador], "2"
+    je .empiezan_los_soldados
 
     mov rdi, msg_err_seleccion
     call printf
-    jmp .seleccion_opcion
+    jmp elegir_primer_jugador
 
     .empiezan_los_soldados:
     mov byte [es_turno_soldado], 1
@@ -446,6 +443,45 @@ elegir_turno:
 
     .empiezan_los_oficiales:
     mov byte [es_turno_soldado], 0
+    ret
+
+elegir_simbolos:
+    mov rdi, msg_elegir_simbolos_oficiales
+    call printf
+
+    mov rdi, input_elegir_simbolo
+    mov rsi, buffer_simbolo_oficiales
+    call scanf
+
+    mov rdi, msg_elegir_simbolos_soldados
+    call printf
+
+    mov rdi, input_elegir_simbolo
+    mov rsi, buffer_simbolo_soldados
+    call scanf
+
+    ret
+
+elegir_posicion_fortaleza:
+    mov rdi, msg_elegir_posicion_fortaleza
+    call printf
+
+    mov rdi, input_elegir_posicion_fortaleza
+    mov rsi, buffer_posicion_fortaleza
+    call scanf
+
+    cmp byte [buffer_posicion_fortaleza], "^"
+    je .posicionar_arriba
+    cmp byte [buffer_posicion_fortaleza], "v"
+    je .posicionar_abajo
+
+    mov rdi, msg_err_seleccion
+    call printf
+    jmp elegir_posicion_fortaleza
+
+    .posicionar_arriba:
+    .posicionar_abajo:
+
     ret
 
 guardar_partida:

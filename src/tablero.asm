@@ -1,4 +1,5 @@
     global ansi_celda_seleccionada
+    global buffer_posicion_fortaleza
     global tablero
     global tablero_actualizar
     global tablero_finalizar
@@ -21,10 +22,10 @@
 
     tablero db ' ', ' ', ' ', 'X', 'X', ' ', ' '
             db ' ', ' ', ' ', 'X', 'X', ' ', ' '
-            db 'X', 'X', ' ', 'X', 'X', ' ', ' '
             db 'X', 'X', ' ', ' ', ' ', ' ', ' '
             db 'X', 'X', ' ', ' ', ' ', ' ', ' '
-            db ' ', ' ', ' ', ' ', 'O', ' ', ' '
+            db 'X', 'X', ' ', ' ', ' ', ' ', ' '
+            db ' ', ' ', 'X', ' ', 'O', ' ', ' '
             db ' ', ' ', 'O', ' ', ' ', ' ', ' '
 
     icono_esq_vacia db "   ",0
@@ -44,6 +45,8 @@
     section .bss
 
     buffer_ansi_celda resb LONGITUD_CELDA_ASCII ; almacena la sequencia ANSI leída del archivo por cada celda
+    buffer_posicion_fortaleza resb 1 
+
     file_desc_archivo_tablero resq 1 ; file descriptor archivo tablero
 
     section .text

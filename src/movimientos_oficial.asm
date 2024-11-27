@@ -11,8 +11,8 @@
 
     %define CANTIDAD_COLUMNAS 7
 
-    %macro MENSAJE_RESALTADO 1
-    db 10,0x1b,"[38;5;231;48;5;9m",%1,0x1b,"[0m",10,0
+    %macro MENSAJE_NEGRITAS 1
+    db 10,0x1b,"[1m",%1,0x1b,"[0m",10,10,0
     %endmacro
 
     section .bss
@@ -21,17 +21,18 @@
     ptr_cant_movimientos_oficial_actual resq 1
 
     section .data
-    msg_oficial_1 MENSAJE_RESALTADO " Oficial 1 "
-    msg_oficial_2 MENSAJE_RESALTADO " Oficial 2 "
-    msg_cantidad_movimientos db 10,"  - Arriba...................%i",10
-                                db "  - Abajo....................%i",10
-                                db "  - Izquierda................%i",10
-                                db "  - Derecha..................%i",10
-                                db "  - Diag. Arriba Izquierda...%i",10
-                                db "  - Diag. Arriba Derecha.....%i",10
-                                db "  - Diag. Abajo Izquierda....%i",10
-                                db "  - Diag. Abajo Derecha......%i",10,0
-    
+    msg_titulo_estadisticas_oficiales MENSAJE_NEGRITAS " Oficial 1                       Oficial 2 "
+    msg_datos_estadisticas_oficiales
+    db "  • Arriba...................%i   • Arriba...................%i",10
+    db "  • Abajo....................%i   • Abajo....................%i",10
+    db "  • Izquierda................%i   • Izquierda................%i",10
+    db "  • Derecha..................%i   • Derecha..................%i",10
+    db "  • Diag. Arriba Izquierda...%i   • Diag. Arriba Izquierda...%i",10
+    db "  • Diag. Arriba Derecha.....%i   • Diag. Arriba Derecha.....%i",10
+    db "  • Diag. Abajo Izquierda....%i   • Diag. Abajo Izquierda....%i",10
+    db "  • Diag. Abajo Derecha......%i   • Diag. Abajo Derecha......%i",10
+    db "  • Capturas.................%i   • Capturas.................%i",10,10,0
+
     pos_oficial_1 db 39
     pos_oficial_2 db 44
     cant_capturas_oficial_1 db 0
@@ -719,30 +720,66 @@ calcular_distancia_entre_celdas:
     ret
 
 mostrar_estadisticas:
-    ; TODO: quiza sea bueno guardar un -1 o 0 en la posicion final del oficial
-    ; para indicar que fue retirado, puede ayudar a mostrar esta stat y a la
-    ; carga en el archivo
-
     .oficial_1:
-    mov rdi, msg_oficial_1
+    mov rdi, msg_titulo_estadisticas_oficiales
     call printf
 
-    mov rdi, msg_cantidad_movimientos
-    movzx rsi, byte [cant_movimientos_oficial_1 + 1] ; ↑
-    movzx rdx, byte [cant_movimientos_oficial_1 + 15] ; ↓
-    movzx rcx, byte [cant_movimientos_oficial_1 + 7] ; ←
-    movzx r8, byte [cant_movimientos_oficial_1 + 9] ; →
-    movzx r9, byte [cant_movimientos_oficial_1] ; ↖
+    mov rdi, msg_datos_estadisticas_oficiales
 
-    sub rsp, 8
-    movzx rax, byte [cant_movimientos_oficial_1 + 16] ; ↘
+    ; ↑
+    movzx rsi, byte [cant_movimientos_oficial_1 + 1] 
+    movzx rdx, byte [cant_movimientos_oficial_2 + 1] 
+
+    ; ↓
+    movzx rcx, byte [cant_movimientos_oficial_1 + 15] 
+    movzx r8, byte [cant_movimientos_oficial_2 + 15]
+
+    ; ←
+    movzx r9, byte [cant_movimientos_oficial_1 + 7]
+
+    ; iniciamos pusheando al stack
+
+    ; capturas
+    movzx rax, byte [cant_capturas_oficial_2]
     push rax
-    movzx rax, byte [cant_movimientos_oficial_1 + 14] ; ↙
+    movzx rax, byte [cant_capturas_oficial_1]
     push rax
-    movzx rax, byte [cant_movimientos_oficial_1 + 2] ; ↗
+
+    ; ↘
+    movzx rax, byte [cant_movimientos_oficial_2 + 16]
+    push rax
+    movzx rax, byte [cant_movimientos_oficial_1 + 16]
+    push rax
+
+    ; ↙
+    movzx rax, byte [cant_movimientos_oficial_2 + 14]
+    push rax
+    movzx rax, byte [cant_movimientos_oficial_1 + 14]
+    push rax
+
+    ; ↗
+    movzx rax, byte [cant_movimientos_oficial_2 + 2]
+    push rax
+    movzx rax, byte [cant_movimientos_oficial_1 + 2]
+    push rax
+
+    ; ↖
+    movzx rax, byte [cant_movimientos_oficial_2]
+    push rax
+    movzx rax, byte [cant_movimientos_oficial_1]
+    push rax
+
+    ; →
+    movzx rax, byte [cant_movimientos_oficial_2 + 9]
+    push rax
+    movzx rax, byte [cant_movimientos_oficial_1 + 9]
+    push rax
+
+    ; ←
+    movzx rax, byte [cant_movimientos_oficial_2 + 7]
     push rax
 
     call printf
-    add rsp, 32
+    add rsp, 104
 
     ret
