@@ -10,7 +10,6 @@
     extern scanf
 
     extern array_movimientos_posibles
-    extern buffer_posicion_fortaleza
     extern cargar_movimientos_oficial
     extern cargar_movimientos_soldado
     extern efectuar_movimiento_oficial
@@ -18,6 +17,7 @@
     extern juego_terminado
     extern mostrar_estadisticas
     extern pos_oficial_1
+    extern posicion_fortaleza
     extern seleccionar_celda
     extern seleccionar_proxima_celda
     extern tablero
@@ -109,8 +109,7 @@ main:
     add rsp, 8
 
     call cargar_partida_guardada
-
-    call tablero_inicializar ; cargamos el estado inicial del tablero
+    call tablero_inicializar
 
     .game_loop: ; <===== inicio de un turno
     ; limpiamos la pantalla en cada render
@@ -412,11 +411,11 @@ cargar_partida_guardada:
     mov rdi, msg_personalizacion
     call printf
 
-    ; sub rsp, 8
-    ; call elegir_primer_jugador
-    ; call elegir_simbolos
-    ; call elegir_posicion_fortaleza
-    ; add rsp, 8
+    sub rsp, 8
+    call elegir_primer_jugador
+    call elegir_simbolos
+    call elegir_posicion_fortaleza
+    add rsp, 8
 
     ret
 
@@ -467,21 +466,19 @@ elegir_posicion_fortaleza:
     call printf
 
     mov rdi, input_elegir_posicion_fortaleza
-    mov rsi, buffer_posicion_fortaleza
+    mov rsi, posicion_fortaleza
     call scanf
 
-    cmp byte [buffer_posicion_fortaleza], "^"
-    je .posicionar_arriba
-    cmp byte [buffer_posicion_fortaleza], "v"
-    je .posicionar_abajo
+    cmp byte [posicion_fortaleza], "^"
+    je .finalizar
+    cmp byte [posicion_fortaleza], "v"
+    je .finalizar
 
     mov rdi, msg_err_seleccion
     call printf
     jmp elegir_posicion_fortaleza
 
-    .posicionar_arriba:
-    .posicionar_abajo:
-
+    .finalizar:
     ret
 
 guardar_partida:
@@ -492,6 +489,13 @@ guardar_partida:
 
     ; guardado de quien tiene el proximo turno
     mov rdi, es_turno_soldado ; ya en este momento se cambió al siguiente
+    mov rsi, 1
+    mov rdx, 1
+    mov rcx, [file_desc_archivo_partida]
+    call fwrite
+
+    ; guardado de la ubicacion de la fortaleza
+    mov rdi, [posicion_fortaleza]
     mov rsi, 1
     mov rdx, 1
     mov rcx, [file_desc_archivo_partida]

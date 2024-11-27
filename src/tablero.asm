@@ -1,5 +1,6 @@
     global ansi_celda_seleccionada
-    global buffer_posicion_fortaleza
+    global posicion_fortaleza
+    global ptr_path_archivo_tablero
     global tablero
     global tablero_actualizar
     global tablero_finalizar
@@ -38,15 +39,17 @@
     ansi_guardar_pos_cursor db 0x1b,"[s",0
     ansi_restaurar_pos_cursor db 0x1b,"[u",0
 
-    ; constantes lectura de archivo
-    path_archivo_tablero db "./static/tablero-abajo.dat",0
+    posicion_fortaleza db "^"
+
+    path_archivo_tablero_abajo db "./static/tablero-aba.dat",0
+    path_archivo_tablero_arriba db "./static/tablero-arr.dat",0
+    path_archivo_tablero_derecha db "./static/tablero-der.dat",0
+    path_archivo_tablero_izquierda db "./static/tablero-izq.dat",0
     modo_lectura_archivo_tablero db "rb",0
 
     section .bss
 
     buffer_ansi_celda resb LONGITUD_CELDA_ASCII ; almacena la sequencia ANSI leída del archivo por cada celda
-    buffer_posicion_fortaleza resb 1 
-
     file_desc_archivo_tablero resq 1 ; file descriptor archivo tablero
 
     section .text
@@ -55,7 +58,17 @@
     ; lee el archivo, pues esto se hace directo en el loop de renderizacion.
     ;
 tablero_inicializar:
-    mov rdi, path_archivo_tablero
+    .posicionar_arriba:
+    cmp byte [posicion_fortaleza], "^"
+    jne .posicionar_abajo
+    mov rdi, path_archivo_tablero_arriba
+    jmp .abrir_archivo_tablero
+
+    .posicionar_abajo:
+    mov rdi, path_archivo_tablero_abajo
+    jmp .abrir_archivo_tablero
+
+    .abrir_archivo_tablero:
     mov rsi, modo_lectura_archivo_tablero
     call fopen
     mov [file_desc_archivo_tablero], rax
