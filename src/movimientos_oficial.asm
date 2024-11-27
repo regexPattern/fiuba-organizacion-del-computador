@@ -4,6 +4,7 @@
     global definir_posiciones_iniciales_oficiales
     global efectuar_movimiento_oficial
     global mostrar_estadisticas
+    global pos_oficial_1
 
     extern array_movimientos_posibles
     extern tablero
@@ -22,14 +23,14 @@
     section .data
     msg_oficial_1 MENSAJE_RESALTADO " Oficial 1 "
     msg_oficial_2 MENSAJE_RESALTADO " Oficial 2 "
-    msg_cantidad_movimientos db 10,"  - Arriba...................%d",10
-                                db "  - Abajo....................%d",10
-                                db "  - Izquierda................%d",10
-                                db "  - Derecha..................%d",10
-                                db "  - Diag. Arriba Izquierda...%d",10
-                                db "  - Diag. Arriba Derecha.....%d",10
-                                db "  - Diag. Abajo Izquierda....%d",10
-                                db "  - Diag. Abajo Derecha......%d",10,0
+    msg_cantidad_movimientos db 10,"  - Arriba...................%i",10
+                                db "  - Abajo....................%i",10
+                                db "  - Izquierda................%i",10
+                                db "  - Derecha..................%i",10
+                                db "  - Diag. Arriba Izquierda...%i",10
+                                db "  - Diag. Arriba Derecha.....%i",10
+                                db "  - Diag. Abajo Izquierda....%i",10
+                                db "  - Diag. Abajo Derecha......%i",10,0
     
     pos_oficial_1 db 39
     pos_oficial_2 db 44
@@ -727,19 +728,20 @@ mostrar_estadisticas:
     call printf
 
     mov rdi, msg_cantidad_movimientos
-    movzx rsi, byte [cant_movimientos_oficial_1] ; ↖
-    movzx rdx, byte [cant_movimientos_oficial_1 + 14] ; ↑
-    movzx rcx, byte [cant_movimientos_oficial_1 + 15] ; ↗
-    movzx r8, byte [cant_movimientos_oficial_1 + 16] ; ←
-    movzx r9, byte [cant_movimientos_oficial_1 + 9] ; →
+    movzx rsi, byte [cant_movimientos_oficial_1 + 1] ; ↑
+    movzx rdx, byte [cant_movimientos_oficial_1 + 15] ; ↓
+    movzx rcx, byte [cant_movimientos_oficial_1 + 7] ; ←
+    movzx r8, byte [cant_movimientos_oficial_1 + 9] ; →
+    movzx r9, byte [cant_movimientos_oficial_1] ; ↖
+
+    sub rsp, 8
     movzx rax, byte [cant_movimientos_oficial_1 + 16] ; ↘
-    push rax
-    movzx rax, byte [cant_movimientos_oficial_1 + 15] ; ↓
     push rax
     movzx rax, byte [cant_movimientos_oficial_1 + 14] ; ↙
     push rax
+    movzx rax, byte [cant_movimientos_oficial_1 + 2] ; ↗
+    push rax
 
-    sub rsp, 8
     call printf
     add rsp, 32
 

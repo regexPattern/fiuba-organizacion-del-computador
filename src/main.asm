@@ -1,25 +1,29 @@
     global main
 
+    extern fclose
     extern fflush
     extern fopen
+    extern fread
+    extern fwrite
     extern printf
+    extern remove
     extern scanf
 
-    extern ansi_celda_seleccionada
     extern array_movimientos_posibles
     extern cargar_movimientos_oficial
     extern cargar_movimientos_soldado
     extern efectuar_movimiento_oficial
     extern efectuar_movimiento_soldado
     extern juego_terminado
+    extern mostrar_estadisticas
+    extern pos_oficial_1
     extern seleccionar_celda
     extern seleccionar_proxima_celda
     extern tablero
+    extern tablero_actualizar
     extern tablero_finalizar
     extern tablero_inicializar
     extern tablero_renderizar
-    extern tablero_actualizar
-    extern mostrar_estadisticas
 
     %macro MENSAJE_RESALTADO 1
     db 10,0x1b,"[38;5;231;48;5;9m",%1,0x1b,"[0m",10,0
@@ -100,7 +104,6 @@ main:
     call cargar_partida
 
     call tablero_inicializar ; cargamos el estado inicial del tablero
-    call elegir_turno
 
     .game_loop: ; <===== inicio de un turno
     ; limpiamos la pantalla en cada render
@@ -219,7 +222,7 @@ main:
     call mostrar_msg_continuar_juego
 
     cmp byte [buffer_salir_del_juego], "n"
-    je .finalizar ; el usuario explícitamente quiere salir del juego
+    je .interrumpir_juego ; el usuario explícitamente quiere salir del juego
 
     jmp .game_loop ; avanzamos al siguiente turno (acá el juego sigue en curso)
 
@@ -243,6 +246,15 @@ main:
     call printf
     add rsp, 8
 
+    ; eliminamos el archivo de la partida en progreso si hay alguna, ya que la
+    ; partida se terminó
+    mov rdi, path_archivo_partida
+    call remove
+    jmp .finalizar
+
+    .interrumpir_juego:
+    call guardar_partida
+
     .finalizar:
     call tablero_finalizar
 
@@ -258,6 +270,7 @@ main:
     call printf
     add rsp, 8
 
+    ; exit syscall
     mov rax,60
     mov rdi,0
     syscall
@@ -342,6 +355,11 @@ cargar_partida:
     cmp rax, 0 ; en este caso no se abrió el archivo
     je .nueva_partida
 
+    ; si encontre un archivo, me guardo el file descriptor, aunque puede ser
+    ; que el usuario decida no cargar la partida anterior
+    ;
+    mov [file_desc_archivo_partida], rax
+
     mov rdi, msg_partida_anterior_encontrada
     call printf
 
@@ -364,15 +382,40 @@ cargar_partida:
     jmp .seleccion_opcion
 
     .cargar_partida_anterior:
-    ; TODO: tengo que leer el archivo, y luego cargarlo todo en un buffer, y
-    ; luego cerrarlo, ya cuando vaya a guardar la partida lo abro y lo cierro
-    ; de nuevo
+    ; leemos quien tiene el proximo turno
+    mov rdi, es_turno_soldado
+    mov rsi, 1
+    mov rdx, 1
+    mov rcx, [file_desc_archivo_partida]
+    call fread
+
+    ; leemos las fichas del tablero
+    mov rdi, tablero
+    mov rsi, 1
+    mov rdx, 49
+    mov rcx, [file_desc_archivo_partida]
+    call fread
+
+    ; leemos las estadisticas de los oficiales
+    mov rdi, pos_oficial_1
+    mov rsi, 1
+    mov rdx, 38
+    mov rcx, [file_desc_archivo_partida]
+    call fread
+
+    ret
 
     .nueva_partida:
-    ; en este caso no se abrio el archivo, asi que no es necesario hacer un fclose
+    ; eliminamos el archivo de partida anterior
+    ; TODO: en este caso deberiamos iniciar con los valores por defecto? Si,
+    ; pero no hay necesidad de generarlos dinamicamente aca o si? Probablemente
+    ; si, en funcion de la customizacion que se elija
     mov rdi, path_archivo_partida
-    mov rsi, modo_escritura_archivo_partida
-    call fopen
+    call remove
+
+    sub rsp, 8
+    call elegir_turno
+    add rsp, 8
 
     ret
 
@@ -403,4 +446,36 @@ elegir_turno:
 
     .empiezan_los_oficiales:
     mov byte [es_turno_soldado], 0
+    ret
+
+guardar_partida:
+    mov rdi, path_archivo_partida
+    mov rsi, modo_escritura_archivo_partida
+    call fopen
+    mov [file_desc_archivo_partida], rax
+
+    ; guardado de quien tiene el proximo turno
+    mov rdi, es_turno_soldado ; ya en este momento se cambió al siguiente
+    mov rsi, 1
+    mov rdx, 1
+    mov rcx, [file_desc_archivo_partida]
+    call fwrite
+
+    ; guardado de las fichas del tablero
+    mov rdi, tablero
+    mov rsi, 1
+    mov rdx, 49
+    mov rcx, [file_desc_archivo_partida]
+    call fwrite
+
+    ; guardado de las estadisticas de los oficiales
+    mov rdi, pos_oficial_1
+    mov rsi, 1
+    mov rdx, 38
+    mov rcx, [file_desc_archivo_partida]
+    call fwrite
+
+    mov rdi, [file_desc_archivo_partida]
+    call fclose
+
     ret
