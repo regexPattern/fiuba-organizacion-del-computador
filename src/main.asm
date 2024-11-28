@@ -19,6 +19,7 @@
     extern tablero_renderizar
     extern tablero_actualizar
     extern encontrar_ganador
+    extern tablero_rotar_90
 
     %macro MENSAJE_RESALTADO 1
     db 10,0x1b,"[38;5;231;48;5;9m",%1,0x1b,"[0m",10,0
@@ -44,12 +45,17 @@
     msg_err_sin_movimientos MENSAJE_ERROR " Ficha seleccionada no tiene movimientos posibles - Elija otra ficha "
     msg_oficial_capturado MENSAJE_RESALTADO " ¡Oficial omitió su captura! "
     msg_elegir_turno MENSAJE_ELEGIR_TURNO " ¿ Quien mueve primero: Oficiales(1) o Soldados(2) ?"
+    msg_rotar_tablero MENSAJE_RESALTADO " ¿Desea rotar el tablero? [y/n] "
+    msg_entrada_invalida MENSAJE_RESALTADO " Respuesta no válida "
+    msg_cuantos_giros MENSAJE_RESALTADO " ¿Cuantos giros de 90° desea realizar? (1, 2 o 3)"
 
     ansi_limpiar_pantalla db 0x1b,"[2J",0x1b,"[H",0
     msg_continuar_juego db 10,"¿Continuar en el juego? [Y/n]: ",0
 
     input_salir_del_juego db " %c",0
     input_elegir_primer_jugador db " %c",0
+    input_elegir_rotar_tablero db " %c",0
+    input_elegir_giros db " %c",0
     prueba db 10,"AAA",0
 
     section .bss
@@ -61,6 +67,8 @@
     buffer_celda_seleccionada resb 1 ; guarda la celda seleccionada en un turno
     buffer_prox_celda_seleccionada resb 1 ; guarda la celda a la que se va a mover el jugador del turno
     buffer_elegir_primer_jugador resb 1 ; guarda el valor de la respuesta de que jugador empieza
+    buffer_elegir_si_rotar resb 1 ; guarda el valor de la respuesta a si se desea rotar el tablero
+    buffer_numero_giros resb 1 ; guarda el numero de giros de 90° que se le aplicaran al tablero
 
     section .text
 
@@ -79,6 +87,7 @@ main:
     ; renderizamos el tablero sin selecciones
     mov rdi, 0
     call tablero_renderizar
+    call elegir_orientacion_tablero
     call elegir_turno
     .inicio_ejecucion_turno: ; <====== acá se regresa en caso de input inválida
     call mostrar_msg_turno
@@ -319,4 +328,81 @@ empiezan_los_soldados:
 
 empiezan_los_oficiales:
     mov byte [es_turno_soldado], 0
+    ret
+
+elegir_orientacion_tablero:
+    mov rdi, msg_rotar_tablero
+    call printf
+
+    ;call flush
+
+    mov rdi, input_elegir_primer_jugador
+    mov rsi, buffer_elegir_si_rotar
+    call scanf
+
+    cmp byte[buffer_elegir_si_rotar], "y"
+    je .preguntar_giros
+
+    cmp byte[buffer_elegir_si_rotar], "n"
+    je .finalizar
+
+    ;si llego aca la respuesta fue invalida
+    mov rdi, msg_entrada_invalida
+    call printf
+    jmp elegir_orientacion_tablero
+
+
+.preguntar_giros:
+    mov rdi, msg_cuantos_giros
+    call printf
+
+    lea rdi, input_elegir_giros
+    lea rsi, buffer_numero_giros
+    call scanf
+
+
+    ;movzx rax, byte [buffer_numero_giros] ; Cargar el carácter leído en rax
+    ;sub rax, '0'
+    ;cmp eax, 1
+    ;jl .entrada_invalida                ; Si es menor a 1, inválido
+    ;cmp eax, 3
+    ;jg .entrada_invalida                ; Si es mayor a 3, inválido
+    ;mov rcx, rax                        ; para luego usar loop
+
+    mov al, byte [buffer_numero_giros]   ; Cargar el carácter
+    cmp al, '1'
+    je .giro_1
+    cmp al, '2'
+    je .giro_2
+    cmp al, '3'
+    je .giro_3
+    jmp .entrada_invalida
+
+.giro_1:
+    call tablero_rotar_90
+    mov rdi, 0
+    call tablero_actualizar
+    jmp .finalizar
+
+.giro_2:
+    call tablero_rotar_90
+    call tablero_rotar_90
+    mov rdi, 0
+    call tablero_actualizar
+    jmp .finalizar
+
+.giro_3:
+    call tablero_rotar_90
+    call tablero_rotar_90
+    call tablero_rotar_90
+    mov rdi, 0
+    call tablero_actualizar
+    jmp .finalizar
+
+.entrada_invalida:
+    mov rdi, msg_entrada_invalida
+    call printf
+    jmp .preguntar_giros
+
+.finalizar:
     ret
