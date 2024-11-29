@@ -6,6 +6,7 @@
     global tablero_finalizar
     global tablero_inicializar
     global tablero_renderizar
+    global tablero_rotar_90
 
     extern fclose
     extern fopen
@@ -17,7 +18,12 @@
     extern array_movimientos_posibles
 
     %define CANTIDAD_COLUMNAS 7
+    %define CANTIDAD_ELEMENTOS 49
     %define LONGITUD_CELDA_ASCII 29
+
+    %macro MENSAJE_RESALTADO 1
+    db 10,0x1b,"[38;5;231;48;5;9m",%1,0x1b,"[0m",10,0
+    %endmacro
 
     section .data
 
@@ -51,6 +57,7 @@
 
     buffer_ansi_celda resb LONGITUD_CELDA_ASCII ; almacena la sequencia ANSI leída del archivo por cada celda
     file_desc_archivo_tablero resq 1 ; file descriptor archivo tablero
+    temp_tablero resb CANTIDAD_ELEMENTOS ; tablero temporal para realizar la rotacion de 90°
 
     section .text
 
@@ -256,5 +263,45 @@ tablero_actualizar:
 
     mov rdi, ansi_restaurar_pos_cursor
     call printf
+
+    ret
+
+tablero_rotar_90:
+    lea rsi, [tablero]
+    lea rdi, [temp_tablero]
+    mov rdx, CANTIDAD_ELEMENTOS
+    rep movsb                   ; copio el tablero original a en temp_tablero
+
+
+    xor r9, r9                  ; r9 = índice fila original (i)
+.loop_filas:
+    xor r10, r10                  ; r10 = índice columna original (j)
+.loop_columnas:
+    ; Calcular índice en el tablero rotado
+    mov rax, r10                 ; rax = j (columna original)
+    imul rax, CANTIDAD_COLUMNAS  ; rax = j * CANTIDAD_COLUMNAS (fila rotada)
+    mov rbx, CANTIDAD_COLUMNAS
+    sub rbx, r9                 ; rbx = CANTIDAD_COLUMNAS - i
+    dec rbx                     ; rbx -= 1
+    add rax, rbx                ; rax = índice en el tablero rotado
+
+    ; Calcular índice en el tablero original
+    mov rbx, r9                 ; rbx = i (fila original)
+    imul rbx, CANTIDAD_COLUMNAS ; rbx = i * CANTIDAD_COLUMNAS
+    add rbx, r10                 ; rbx = índice en el tablero original
+
+    ; Mover el valor
+    mov dl, byte [temp_tablero + rbx]
+    mov byte [tablero + rax], dl
+
+    ; Incrementar columna
+    inc r10
+    cmp r10, CANTIDAD_COLUMNAS
+    jl .loop_columnas
+
+    ; Incrementar fila
+    inc r9
+    cmp r9, CANTIDAD_COLUMNAS
+    jl .loop_filas
 
     ret

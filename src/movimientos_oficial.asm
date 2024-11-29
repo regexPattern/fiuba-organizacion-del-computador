@@ -22,8 +22,7 @@
 
     section .data
     msg_titulo_estadisticas_oficiales MENSAJE_NEGRITAS " Oficial 1                       Oficial 2 "
-    msg_datos_estadisticas_oficiales
-    db "  • Arriba...................%i   • Arriba...................%i",10
+    msg_datos_estadisticas_oficiales db "  • Arriba...................%i   • Arriba...................%i",10
     db "  • Abajo....................%i   • Abajo....................%i",10
     db "  • Izquierda................%i   • Izquierda................%i",10
     db "  • Derecha..................%i   • Derecha..................%i",10

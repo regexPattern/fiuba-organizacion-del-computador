@@ -25,6 +25,7 @@
     extern tablero_finalizar
     extern tablero_inicializar
     extern tablero_renderizar
+    extern tablero_rotar_90
 
     %macro MENSAJE_RESALTADO 1
     db 10,0x1b,"[38;5;231;48;5;9m",%1,0x1b,"[0m",10,0
@@ -70,6 +71,8 @@
     msg_ganador_soldados_oficiales_rodeados MENSAJE_RESALTADO " ¡Soldados ganan! (Oficiales inmobilizados) "
     msg_ganador_oficiales MENSAJE_RESALTADO " ¡Oficiales ganan! (Soldados diezmados) "
     msg_estadisticas MENSAJE_RESALTADO " Estadísticas del juego "
+    msg_rotar_tablero MENSAJE_RESALTADO " ¿Desea rotar el tablero? [y/n] "
+    msg_cuantos_giros MENSAJE_RESALTADO " ¿Cuantos giros de 90° desea realizar? (1, 2 o 3)"
 
     ansi_limpiar_pantalla db 0x1b,"[2J",0x1b,"[H",0
 
@@ -78,6 +81,8 @@
     input_elegir_simbolo db " %c", 0
     input_elegir_posicion_fortaleza db " %c",0
     input_continuar_partida_actual db " %c",0
+    input_elegir_rotar_tablero db " %c",0
+    input_elegir_giros db " %c",0
 
     path_archivo_partida db "partida.dat",0
     modo_lectura_archivo_partida db "rb",0
@@ -95,6 +100,8 @@
     buffer_continuar_partida_actual resb 1 ; guarda el valor de la respuesta a si se desea continuar la partida actual o salir del juego
     buffer_celda_seleccionada resb 1       ; guarda la celda seleccionada en un turno
     buffer_prox_celda_seleccionada resb 1  ; guarda la celda a la que se va a mover el jugador del turno
+    buffer_elegir_si_rotar resb 1          ; guarda el valor de la respuesta a si se desea rotar el tablero
+    buffer_numero_giros resb 1             ; guarda el numero de giros de 90° que se le aplicaran al tablero
 
     file_desc_archivo_partida resq 1      ; file descriptor archivo partida
 
@@ -518,4 +525,82 @@ guardar_partida:
     mov rdi, [file_desc_archivo_partida]
     call fclose
 
+    ret
+
+elegir_orientacion_tablero:
+    mov rdi, msg_rotar_tablero
+    call printf
+
+    ;call flush
+
+    mov rdi, input_elegir_primer_jugador
+    mov rsi, buffer_elegir_si_rotar
+    call scanf
+
+    cmp byte[buffer_elegir_si_rotar], "y"
+    je .preguntar_giros
+
+    cmp byte[buffer_elegir_si_rotar], "n"
+    je .finalizar
+
+    ;si llego aca la respuesta fue invalida
+    mov rdi, msg_err_seleccion
+    call printf
+    jmp elegir_orientacion_tablero
+
+.preguntar_giros:
+    mov rdi, msg_cuantos_giros
+    call printf
+
+    lea rdi, input_elegir_giros
+    lea rsi, buffer_numero_giros
+    call scanf
+
+
+    ;movzx rax, byte [buffer_numero_giros] ; Cargar el carácter leído en rax
+    ;sub rax, '0'
+    ;cmp eax, 1
+    ;jl .entrada_invalida                ; Si es menor a 1, inválido
+    ;cmp eax, 3
+    ;jg .entrada_invalida                ; Si es mayor a 3, inválido
+    ;mov rcx, rax                        ; para luego usar loop
+
+    mov al, byte [buffer_numero_giros]   ; Cargar el carácter
+    cmp al, '1'
+    je .giro_1
+    cmp al, '2'
+    je .giro_2
+    cmp al, '3'
+    je .giro_3
+    jmp .entrada_invalida
+
+.giro_1:
+    call tablero_rotar_90
+    mov rdi, 0
+    sub rsp, 8
+    call tablero_actualizar
+    add rsp, 8
+    jmp .finalizar
+
+.giro_2:
+    call tablero_rotar_90
+    call tablero_rotar_90
+    mov rdi, 0
+    call tablero_actualizar
+    jmp .finalizar
+
+.giro_3:
+    call tablero_rotar_90
+    call tablero_rotar_90
+    call tablero_rotar_90
+    mov rdi, 0
+    call tablero_actualizar
+    jmp .finalizar
+
+.entrada_invalida:
+    mov rdi, msg_err_seleccion
+    call printf
+    jmp .preguntar_giros
+
+.finalizar:
     ret
