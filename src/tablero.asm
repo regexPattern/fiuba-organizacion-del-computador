@@ -251,20 +251,9 @@ tablero_actualizar:
     ret
 
 tablero_rotar_90:
-    push rsi
-    push rdi
-    push rcx
-    push rdx
-    push r9
-    push r10
-    push rax
-    push rbx
-
-    mov rcx, CANTIDAD_ELEMENTOS
-
     lea rsi, [tablero]
     lea rdi, [temp_tablero]
-    mov rdx, rcx                ;
+    mov rdx, CANTIDAD_ELEMENTOS
     rep movsb                   ; copio el tablero original a en temp_tablero
 
 
@@ -274,15 +263,15 @@ tablero_rotar_90:
 .loop_columnas:
     ; Calcular índice en el tablero rotado
     mov rax, r10                 ; rax = j (columna original)
-    imul rax, rcx               ; rax = j * CANTIDAD_COLUMNAS (fila rotada)
-    mov rbx, rcx
+    imul rax, CANTIDAD_COLUMNAS  ; rax = j * CANTIDAD_COLUMNAS (fila rotada)
+    mov rbx, CANTIDAD_COLUMNAS
     sub rbx, r9                 ; rbx = CANTIDAD_COLUMNAS - i
     dec rbx                     ; rbx -= 1
     add rax, rbx                ; rax = índice en el tablero rotado
 
     ; Calcular índice en el tablero original
     mov rbx, r9                 ; rbx = i (fila original)
-    imul rbx, rcx               ; rbx = i * CANTIDAD_COLUMNAS
+    imul rbx, CANTIDAD_COLUMNAS ; rbx = i * CANTIDAD_COLUMNAS
     add rbx, r10                 ; rbx = índice en el tablero original
 
     ; Mover el valor
@@ -291,20 +280,12 @@ tablero_rotar_90:
 
     ; Incrementar columna
     inc r10
-    cmp r10, rcx
+    cmp r10, CANTIDAD_COLUMNAS
     jl .loop_columnas
 
     ; Incrementar fila
     inc r9
-    cmp r9, rcx
+    cmp r9, CANTIDAD_COLUMNAS
     jl .loop_filas
 
-    pop rdx
-    pop rcx
-    pop rdi
-    pop rsi
-    pop r9
-    pop r10
-    push rax
-    push rbx
     ret

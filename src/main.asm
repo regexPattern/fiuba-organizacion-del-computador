@@ -381,7 +381,9 @@ elegir_orientacion_tablero:
 .giro_1:
     call tablero_rotar_90
     mov rdi, 0
+    sub rsp, 8
     call tablero_actualizar
+    add rsp, 8
     jmp .finalizar
 
 .giro_2:
