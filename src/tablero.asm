@@ -1,5 +1,5 @@
     global ansi_celda_seleccionada
-    global posicion_fortaleza
+    global buffer_posicion_fortaleza
     global ptr_path_archivo_tablero
     global tablero
     global tablero_actualizar
@@ -45,7 +45,7 @@
     ansi_guardar_pos_cursor db 0x1b,"[s",0
     ansi_restaurar_pos_cursor db 0x1b,"[u",0
 
-    posicion_fortaleza db "^"
+    buffer_posicion_fortaleza db "v"
 
     path_archivo_tablero_abajo db "./static/tablero-aba.dat",0
     path_archivo_tablero_arriba db "./static/tablero-arr.dat",0
@@ -66,7 +66,7 @@
     ;
 tablero_inicializar:
     .posicionar_arriba:
-    cmp byte [posicion_fortaleza], "^"
+    cmp byte [buffer_posicion_fortaleza], "^"
     jne .posicionar_abajo
     mov rdi, path_archivo_tablero_arriba
     jmp .abrir_archivo_tablero

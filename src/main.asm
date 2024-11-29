@@ -17,7 +17,7 @@
     extern juego_terminado
     extern mostrar_estadisticas
     extern pos_oficial_1
-    extern posicion_fortaleza
+    extern buffer_posicion_fortaleza
     extern seleccionar_celda
     extern seleccionar_proxima_celda
     extern tablero
@@ -52,10 +52,9 @@
     msg_continuar_partida_anterior db 10,"¿Continuar partida anterior? [Y/n]: ",0
     msg_personalizacion MENSAJE_RESALTADO " Personalizá tu partida "
 
-    msg_elegir_primer_jugador db 10,0x1b,"[1m"," • ¿Quién mueve primero? [1: oficiales | 2: soldados]: ",0x1b,"[0m",0
-    msg_elegir_simbolos_oficiales db 10,0x1b,"[1m"," • Ingresá el símbolo para los oficiales: ",0x1b,"[0m",0
-    msg_elegir_simbolos_soldados db 10,0x1b,"[1m"," • Ingresá el símbolo para los soldados: ",0x1b,"[0m",0
-    msg_elegir_posicion_fortaleza db 10,0x1b,"[1m"," • ¿En qué posición querés ubicar la fortaleza? [^: arriba | v: abajo]: ",0x1b,"[0m",0
+    msg_elegir_primer_jugador db 10,0x1b,"[1m"," • ¿Quién mueve primero? [ 1 oficiales | 2 soldados ]: ",0x1b,"[0m",0
+    msg_elegir_si_rotar_tablero db 10,0x1b,"[1m"," • ¿Desea rotar el tablero? [Y/n]: ",0x1b,"[0m",0
+    msg_elegir_posicion_fortaleza db 10,0x1b,"[1m"," • ¿En qué posición querés ubicar la fortaleza? [ ^ arriba | > derecha | v abajo | < izquierda ]: ",0x1b,"[0m",0
 
     msg_seleccion_opcion db 10," - Seleccione una opción: ",0
     msg_err_seleccion MENSAJE_ERROR " Opción seleccionada no es válida "
@@ -71,18 +70,15 @@
     msg_ganador_soldados_oficiales_rodeados MENSAJE_RESALTADO " ¡Soldados ganan! (Oficiales inmobilizados) "
     msg_ganador_oficiales MENSAJE_RESALTADO " ¡Oficiales ganan! (Soldados diezmados) "
     msg_estadisticas MENSAJE_RESALTADO " Estadísticas del juego "
-    msg_rotar_tablero MENSAJE_RESALTADO " ¿Desea rotar el tablero? [y/n] "
-    msg_cuantos_giros MENSAJE_RESALTADO " ¿Cuantos giros de 90° desea realizar? (1, 2 o 3)"
 
     ansi_limpiar_pantalla db 0x1b,"[2J",0x1b,"[H",0
 
     input_cargar_partida_guardada db " %c",0
     input_elegir_primer_jugador db " %c",0
     input_elegir_simbolo db " %c", 0
+    input_elegir_rotar_tablero db " %c",0
     input_elegir_posicion_fortaleza db " %c",0
     input_continuar_partida_actual db " %c",0
-    input_elegir_rotar_tablero db " %c",0
-    input_elegir_giros db " %c",0
 
     path_archivo_partida db "partida.dat",0
     modo_lectura_archivo_partida db "rb",0
@@ -101,7 +97,6 @@
     buffer_celda_seleccionada resb 1       ; guarda la celda seleccionada en un turno
     buffer_prox_celda_seleccionada resb 1  ; guarda la celda a la que se va a mover el jugador del turno
     buffer_elegir_si_rotar resb 1          ; guarda el valor de la respuesta a si se desea rotar el tablero
-    buffer_numero_giros resb 1             ; guarda el numero de giros de 90° que se le aplicaran al tablero
 
     file_desc_archivo_partida resq 1      ; file descriptor archivo partida
 
@@ -115,7 +110,7 @@ main:
     call printf
     add rsp, 8
 
-    call cargar_partida_guardada
+    call partida_inicializar
     call tablero_inicializar
 
     .game_loop: ; <===== inicio de un turno
@@ -356,7 +351,7 @@ mostrar_msg_continuar_partida_actual:
 
     ret
 
-cargar_partida_guardada:
+partida_inicializar:
     mov rdi, path_archivo_partida
     mov rsi, modo_lectura_archivo_partida
     call fopen
@@ -421,7 +416,7 @@ cargar_partida_guardada:
     sub rsp, 8
     call elegir_primer_jugador
     call elegir_simbolos
-    call elegir_posicion_fortaleza
+    call elegir_orientacion_tablero
     add rsp, 8
 
     ret
@@ -452,40 +447,103 @@ elegir_primer_jugador:
     ret
 
 elegir_simbolos:
-    mov rdi, msg_elegir_simbolos_oficiales
-    call printf
+    ; mov rdi, msg_elegir_simbolos_oficiales
+    ; call printf
 
-    mov rdi, input_elegir_simbolo
-    mov rsi, buffer_simbolo_oficiales
-    call scanf
+    ; mov rdi, input_elegir_simbolo
+    ; mov rsi, buffer_simbolo_oficiales
+    ; call scanf
 
-    mov rdi, msg_elegir_simbolos_soldados
-    call printf
+    ; mov rdi, msg_elegir_simbolos_soldados
+    ; call printf
 
-    mov rdi, input_elegir_simbolo
-    mov rsi, buffer_simbolo_soldados
-    call scanf
+    ; mov rdi, input_elegir_simbolo
+    ; mov rsi, buffer_simbolo_soldados
+    ; call scanf
 
     ret
 
-elegir_posicion_fortaleza:
+; elegir_posicion_fortaleza:
+;     mov rdi, msg_elegir_posicion_fortaleza
+;     call printf
+; 
+;     mov rdi, input_elegir_posicion_fortaleza
+;     mov rsi, posicion_fortaleza
+;     call scanf
+; 
+;     cmp byte [buffer_posicion_fortaleza], "^"
+;     je .finalizar
+;     cmp byte [buffer_posicion_fortaleza], "v"
+;     je .finalizar
+; 
+;     mov rdi, msg_err_seleccion
+;     call printf
+;     jmp elegir_posicion_fortaleza
+; 
+;     .finalizar:
+;     ret
+
+elegir_orientacion_tablero:
+    mov rdi, msg_elegir_si_rotar_tablero
+    call printf
+
+    ;call flush
+
+    mov rdi, input_elegir_primer_jugador
+    mov rsi, buffer_elegir_si_rotar
+    call scanf
+
+    cmp byte[buffer_elegir_si_rotar], "n"
+    je .finalizar
+
+    .preguntar_posicion:
     mov rdi, msg_elegir_posicion_fortaleza
     call printf
 
-    mov rdi, input_elegir_posicion_fortaleza
-    mov rsi, posicion_fortaleza
+    lea rdi, input_elegir_posicion_fortaleza
+    lea rsi, buffer_posicion_fortaleza
     call scanf
 
-    cmp byte [posicion_fortaleza], "^"
-    je .finalizar
-    cmp byte [posicion_fortaleza], "v"
-    je .finalizar
+    cmp byte [buffer_posicion_fortaleza], "^"
+    je .posicionar_arriba
+    cmp byte [buffer_posicion_fortaleza], ">"
+    je .posicionar_derecha
+    cmp byte [buffer_posicion_fortaleza], "v"
+    je .posicionar_abajo
+    cmp byte [buffer_posicion_fortaleza], "<"
+    je .posicionar_izquierda
 
+    ; si llegue aqui es porque ninguna de las opciones es valida
     mov rdi, msg_err_seleccion
     call printf
-    jmp elegir_posicion_fortaleza
+    jmp .preguntar_posicion
+
+    .posicionar_arriba:
+    ; call tablero_rotar_90
+    ; mov rdi, 0
+    jmp .finalizar
+
+    .posicionar_derecha:
+    ; call tablero_rotar_90
+    ; call tablero_rotar_90
+    ; call tablero_rotar_90
+    ; mov rdi, 0
+    jmp .finalizar
+
+    .posicionar_abajo:
+    ; call tablero_rotar_90
+    ; call tablero_rotar_90
+    ; mov rdi, 0
+    jmp .finalizar
+
+    .posicionar_izquierda:
+    jmp .finalizar
 
     .finalizar:
+    ; no hay necesidad de llamar a tablero_actualizar, porque igual esto se
+    ; configura antes de que el tablero se inicialice, entonces el tablero
+    ; siempre va a arrancar con las posicion elegida
+
     ret
 
 guardar_partida:
@@ -502,7 +560,7 @@ guardar_partida:
     call fwrite
 
     ; guardado de la ubicacion de la fortaleza
-    mov rdi, [posicion_fortaleza]
+    mov rdi, [buffer_posicion_fortaleza]
     mov rsi, 1
     mov rdx, 1
     mov rcx, [file_desc_archivo_partida]
@@ -525,82 +583,4 @@ guardar_partida:
     mov rdi, [file_desc_archivo_partida]
     call fclose
 
-    ret
-
-elegir_orientacion_tablero:
-    mov rdi, msg_rotar_tablero
-    call printf
-
-    ;call flush
-
-    mov rdi, input_elegir_primer_jugador
-    mov rsi, buffer_elegir_si_rotar
-    call scanf
-
-    cmp byte[buffer_elegir_si_rotar], "y"
-    je .preguntar_giros
-
-    cmp byte[buffer_elegir_si_rotar], "n"
-    je .finalizar
-
-    ;si llego aca la respuesta fue invalida
-    mov rdi, msg_err_seleccion
-    call printf
-    jmp elegir_orientacion_tablero
-
-.preguntar_giros:
-    mov rdi, msg_cuantos_giros
-    call printf
-
-    lea rdi, input_elegir_giros
-    lea rsi, buffer_numero_giros
-    call scanf
-
-
-    ;movzx rax, byte [buffer_numero_giros] ; Cargar el carácter leído en rax
-    ;sub rax, '0'
-    ;cmp eax, 1
-    ;jl .entrada_invalida                ; Si es menor a 1, inválido
-    ;cmp eax, 3
-    ;jg .entrada_invalida                ; Si es mayor a 3, inválido
-    ;mov rcx, rax                        ; para luego usar loop
-
-    mov al, byte [buffer_numero_giros]   ; Cargar el carácter
-    cmp al, '1'
-    je .giro_1
-    cmp al, '2'
-    je .giro_2
-    cmp al, '3'
-    je .giro_3
-    jmp .entrada_invalida
-
-.giro_1:
-    call tablero_rotar_90
-    mov rdi, 0
-    sub rsp, 8
-    call tablero_actualizar
-    add rsp, 8
-    jmp .finalizar
-
-.giro_2:
-    call tablero_rotar_90
-    call tablero_rotar_90
-    mov rdi, 0
-    call tablero_actualizar
-    jmp .finalizar
-
-.giro_3:
-    call tablero_rotar_90
-    call tablero_rotar_90
-    call tablero_rotar_90
-    mov rdi, 0
-    call tablero_actualizar
-    jmp .finalizar
-
-.entrada_invalida:
-    mov rdi, msg_err_seleccion
-    call printf
-    jmp .preguntar_giros
-
-.finalizar:
     ret
