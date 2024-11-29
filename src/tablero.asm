@@ -260,7 +260,6 @@ tablero_actualizar:
     call tablero_renderizar
     add rsp, 8
 
-
     mov rdi, ansi_restaurar_pos_cursor
     call printf
 

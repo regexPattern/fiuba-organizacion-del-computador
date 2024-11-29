@@ -5,6 +5,7 @@
     global efectuar_movimiento_oficial
     global mostrar_estadisticas
     global pos_oficial_1
+    global pos_oficial_2
 
     extern array_movimientos_posibles
     extern tablero
@@ -664,7 +665,11 @@ efectuar_movimiento_oficial:
     ; en este caso eliminamos al oficial del tablero (ya lo habíamos movido)
     mov byte [tablero + rsi], ' '
     mov rax, 1
-    jmp .finalizar
+
+    mov rbp, [ptr_pos_oficial_actual]
+    mov byte [rbp], -1 ; ponemos en -1 en la posicion del oficial actual para indicar que fue removido del tablero
+
+    ret
 
     .efectuar_captura:
     mov rbx, rsi

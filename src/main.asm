@@ -258,7 +258,9 @@ main:
     ; eliminamos el archivo de la partida en progreso si hay alguna, ya que la
     ; partida se terminó
     mov rdi, path_archivo_partida
+    sub rsp, 8
     call remove
+    add rsp, 8
     jmp .finalizar
 
     .interrumpir_juego:
@@ -560,7 +562,7 @@ guardar_partida:
     call fwrite
 
     ; guardado de la ubicacion de la fortaleza
-    mov rdi, [buffer_posicion_fortaleza]
+    mov rdi, buffer_posicion_fortaleza
     mov rsi, 1
     mov rdx, 1
     mov rcx, [file_desc_archivo_partida]
