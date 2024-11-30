@@ -1,4 +1,6 @@
     global main
+    global buffer_simbolo_oficiales
+    global buffer_simbolo_soldados
 
     extern fclose
     extern fflush
@@ -55,6 +57,8 @@
     msg_elegir_primer_jugador db 10,0x1b,"[1m"," • ¿Quién mueve primero? [ 1 oficiales | 2 soldados ]: ",0x1b,"[0m",0
     msg_elegir_si_cambiar_fortaleza db 10,0x1b,"[1m"," • ¿Desea cambiar la posicion de la fortaleza? [Y/n]: ",0x1b,"[0m",0
     msg_elegir_posicion_fortaleza db 10,0x1b,"[1m"," • ¿En qué posición querés ubicar la fortaleza? [ ^ arriba | v abajo ]: ",0x1b,"[0m",0
+    msg_elegir_simbolos_oficiales db 10,0x1b,"[1m"," • Ingresá el símbolo para los oficiales: ♠(1) ♥(2) ♣(3) ♦(4) ♪(5) ★(6)",0x1b,"[0m",0
+    msg_elegir_simbolos_soldados db 10,0x1b,"[1m"," • Ingresá el símbolo para los soldados: ♠(1) ♥(2) ♣(3) ♦(4) ♪(5) ★(6)",0x1b,"[0m",0
 
     msg_seleccion_opcion db 10," - Seleccione una opción: ",0
     msg_err_seleccion MENSAJE_ERROR " Opción seleccionada no es válida "
@@ -449,19 +453,19 @@ elegir_primer_jugador:
     ret
 
 elegir_simbolos:
-    ; mov rdi, msg_elegir_simbolos_oficiales
-    ; call printf
+    mov rdi, msg_elegir_simbolos_oficiales
+    call printf
 
-    ; mov rdi, input_elegir_simbolo
-    ; mov rsi, buffer_simbolo_oficiales
-    ; call scanf
+    mov rdi, input_elegir_simbolo
+    mov rsi, buffer_simbolo_oficiales
+    call scanf
 
-    ; mov rdi, msg_elegir_simbolos_soldados
-    ; call printf
+    mov rdi, msg_elegir_simbolos_soldados
+    call printf
 
-    ; mov rdi, input_elegir_simbolo
-    ; mov rsi, buffer_simbolo_soldados
-    ; call scanf
+    mov rdi, input_elegir_simbolo
+    mov rsi, buffer_simbolo_soldados
+    call scanf
 
     ret
 
