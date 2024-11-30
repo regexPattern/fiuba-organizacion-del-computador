@@ -27,13 +27,30 @@
 
     section .data
 
-    tablero db ' ', ' ', ' ', 'X', 'X', ' ', ' '
-            db ' ', ' ', ' ', 'X', 'X', ' ', ' '
-            db 'X', 'X', ' ', ' ', ' ', ' ', ' '
-            db 'X', 'X', ' ', ' ', ' ', ' ', ' '
-            db 'X', 'X', ' ', ' ', ' ', ' ', ' '
-            db ' ', ' ', 'X', ' ', 'O', ' ', ' '
-            db ' ', ' ', 'O', ' ', ' ', ' ', ' '
+    ;tablero_aba     db ' ', ' ', ' ', 'X', 'X', ' ', ' '
+    ;                db ' ', ' ', ' ', 'X', 'X', ' ', ' '
+    ;                db 'X', 'X', ' ', ' ', ' ', ' ', ' '
+    ;                db 'X', 'X', ' ', ' ', ' ', ' ', ' '
+    ;                db 'X', 'X', ' ', ' ', ' ', ' ', ' '
+    ;                db ' ', ' ', 'X', ' ', 'O', ' ', ' '
+    ;                db ' ', ' ', 'O', ' ', ' ', ' ', ' '
+
+    tablero_aba     db ' ', ' ', 'X', 'X', 'X', ' ', ' '
+                    db ' ', ' ', 'X', 'X', 'X', ' ', ' '
+                    db 'X', 'X', 'X', 'X', 'X', 'X', 'X'
+                    db 'X', 'X', 'X', 'X', 'X', 'X', 'X'
+                    db 'X', 'X', ' ', ' ', ' ', 'X', 'X'
+                    db ' ', ' ', ' ', ' ', 'O', ' ', ' '
+                    db ' ', ' ', 'O', ' ', ' ', ' ', ' '
+
+    tablero_arr     db ' ', ' ', ' ', ' ', 'O', ' ', ' '
+                    db ' ', ' ', 'O', ' ', ' ', ' ', ' '
+                    db 'X', 'X', ' ', ' ', ' ', 'X', 'X'
+                    db 'X', 'X', 'X', 'X', 'X', 'X', 'X'
+                    db 'X', 'X', 'X', 'X', 'X', 'X', 'X'
+                    db ' ', ' ', 'X', 'X', 'X', ' ', ' '
+                    db ' ', ' ', 'X', 'X', 'X', ' ', ' '
+
 
     icono_esq_vacia db "   ",0
     salto_linea db 10,0
@@ -57,7 +74,8 @@
 
     buffer_ansi_celda resb LONGITUD_CELDA_ASCII ; almacena la sequencia ANSI leída del archivo por cada celda
     file_desc_archivo_tablero resq 1 ; file descriptor archivo tablero
-    temp_tablero resb CANTIDAD_ELEMENTOS ; tablero temporal para realizar la rotacion de 90°
+    tablero resb 49 ; Espacio para almacenar el tablero con la orientacion elegida
+    ;temp_tablero resb CANTIDAD_ELEMENTOS ; tablero temporal para realizar la rotacion de 90°
 
     section .text
 
@@ -65,20 +83,41 @@
     ; lee el archivo, pues esto se hace directo en el loop de renderizacion.
     ;
 tablero_inicializar:
-    .posicionar_arriba:
+
+    ; el valor que llega ya esta validado
     cmp byte [buffer_posicion_fortaleza], "^"
-    jne .posicionar_abajo
-    mov rdi, path_archivo_tablero_arriba
-    jmp .abrir_archivo_tablero
+    je .posicionar_arriba
+
+    cmp byte [buffer_posicion_fortaleza], "v"
+    je .posicionar_abajo
 
     .posicionar_abajo:
+    lea rsi, [tablero_aba]          ; Direccion de tablero seleccionado (fuente)
+    lea rdi, [tablero]              ; Dirección de inicio de tablero (destino)
+    mov rcx, CANTIDAD_ELEMENTOS     ; Número de bytes a copiar
+    rep movsb
+
     mov rdi, path_archivo_tablero_abajo
     jmp .abrir_archivo_tablero
+
+    .posicionar_arriba:
+    lea rsi, [tablero_arr]
+    lea rdi, [tablero]
+    mov rcx, 49
+    rep movsb
+
+    mov rdi, path_archivo_tablero_arriba
+    jmp .abrir_archivo_tablero 
+
+
+    mov rdi, path_archivo_tablero_izquierda
+    jmp .abrir_archivo_tablero 
 
     .abrir_archivo_tablero:
     mov rsi, modo_lectura_archivo_tablero
     call fopen
     mov [file_desc_archivo_tablero], rax
+
     ret
 
     ; renderiza el tablero de acuerdo al estado actual del mismo (los valores de la
@@ -265,42 +304,42 @@ tablero_actualizar:
 
     ret
 
-tablero_rotar_90:
-    lea rsi, [tablero]
-    lea rdi, [temp_tablero]
-    mov rdx, CANTIDAD_ELEMENTOS
-    rep movsb                   ; copio el tablero original a en temp_tablero
-
-
-    xor r9, r9                  ; r9 = índice fila original (i)
-.loop_filas:
-    xor r10, r10                  ; r10 = índice columna original (j)
-.loop_columnas:
-    ; Calcular índice en el tablero rotado
-    mov rax, r10                 ; rax = j (columna original)
-    imul rax, CANTIDAD_COLUMNAS  ; rax = j * CANTIDAD_COLUMNAS (fila rotada)
-    mov rbx, CANTIDAD_COLUMNAS
-    sub rbx, r9                 ; rbx = CANTIDAD_COLUMNAS - i
-    dec rbx                     ; rbx -= 1
-    add rax, rbx                ; rax = índice en el tablero rotado
-
-    ; Calcular índice en el tablero original
-    mov rbx, r9                 ; rbx = i (fila original)
-    imul rbx, CANTIDAD_COLUMNAS ; rbx = i * CANTIDAD_COLUMNAS
-    add rbx, r10                 ; rbx = índice en el tablero original
-
-    ; Mover el valor
-    mov dl, byte [temp_tablero + rbx]
-    mov byte [tablero + rax], dl
-
-    ; Incrementar columna
-    inc r10
-    cmp r10, CANTIDAD_COLUMNAS
-    jl .loop_columnas
-
-    ; Incrementar fila
-    inc r9
-    cmp r9, CANTIDAD_COLUMNAS
-    jl .loop_filas
-
-    ret
+;tablero_rotar_90:
+;    lea rsi, [tablero]
+;    lea rdi, [temp_tablero]
+;    mov rdx, CANTIDAD_ELEMENTOS
+;    rep movsb                   ; copio el tablero original a en temp_tablero
+;
+;
+;    xor r9, r9                  ; r9 = índice fila original (i)
+;.loop_filas:
+;    xor r10, r10                  ; r10 = índice columna original (j)
+;.loop_columnas:
+;    ; Calcular índice en el tablero rotado
+;    mov rax, r10                 ; rax = j (columna original)
+;    imul rax, CANTIDAD_COLUMNAS  ; rax = j * CANTIDAD_COLUMNAS (fila rotada)
+;    mov rbx, CANTIDAD_COLUMNAS
+;    sub rbx, r9                 ; rbx = CANTIDAD_COLUMNAS - i
+;    dec rbx                     ; rbx -= 1
+;    add rax, rbx                ; rax = índice en el tablero rotado
+;
+;    ; Calcular índice en el tablero original
+;    mov rbx, r9                 ; rbx = i (fila original)
+;    imul rbx, CANTIDAD_COLUMNAS ; rbx = i * CANTIDAD_COLUMNAS
+;    add rbx, r10                 ; rbx = índice en el tablero original
+;
+;    ; Mover el valor
+;    mov dl, byte [temp_tablero + rbx]
+;    mov byte [tablero + rax], dl
+;
+;    ; Incrementar columna
+;    inc r10
+;    cmp r10, CANTIDAD_COLUMNAS
+;    jl .loop_columnas
+;
+;    ; Incrementar fila
+;    inc r9
+;    cmp r9, CANTIDAD_COLUMNAS
+;    jl .loop_filas
+;
+;    ret

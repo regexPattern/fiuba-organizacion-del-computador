@@ -53,8 +53,8 @@
     msg_personalizacion MENSAJE_RESALTADO " Personalizá tu partida "
 
     msg_elegir_primer_jugador db 10,0x1b,"[1m"," • ¿Quién mueve primero? [ 1 oficiales | 2 soldados ]: ",0x1b,"[0m",0
-    msg_elegir_si_rotar_tablero db 10,0x1b,"[1m"," • ¿Desea rotar el tablero? [Y/n]: ",0x1b,"[0m",0
-    msg_elegir_posicion_fortaleza db 10,0x1b,"[1m"," • ¿En qué posición querés ubicar la fortaleza? [ ^ arriba | > derecha | v abajo | < izquierda ]: ",0x1b,"[0m",0
+    msg_elegir_si_cambiar_fortaleza db 10,0x1b,"[1m"," • ¿Desea cambiar la posicion de la fortaleza? [Y/n]: ",0x1b,"[0m",0
+    msg_elegir_posicion_fortaleza db 10,0x1b,"[1m"," • ¿En qué posición querés ubicar la fortaleza? [ ^ arriba | v abajo ]: ",0x1b,"[0m",0
 
     msg_seleccion_opcion db 10," - Seleccione una opción: ",0
     msg_err_seleccion MENSAJE_ERROR " Opción seleccionada no es válida "
@@ -418,7 +418,7 @@ partida_inicializar:
     sub rsp, 8
     call elegir_primer_jugador
     call elegir_simbolos
-    call elegir_orientacion_tablero
+    call elegir_posicion_fortaleza
     add rsp, 8
 
     ret
@@ -465,38 +465,24 @@ elegir_simbolos:
 
     ret
 
-; elegir_posicion_fortaleza:
-;     mov rdi, msg_elegir_posicion_fortaleza
-;     call printf
-; 
-;     mov rdi, input_elegir_posicion_fortaleza
-;     mov rsi, posicion_fortaleza
-;     call scanf
-; 
-;     cmp byte [buffer_posicion_fortaleza], "^"
-;     je .finalizar
-;     cmp byte [buffer_posicion_fortaleza], "v"
-;     je .finalizar
-; 
-;     mov rdi, msg_err_seleccion
-;     call printf
-;     jmp elegir_posicion_fortaleza
-; 
-;     .finalizar:
-;     ret
-
-elegir_orientacion_tablero:
-    mov rdi, msg_elegir_si_rotar_tablero
+elegir_posicion_fortaleza:
+    mov rdi, msg_elegir_si_cambiar_fortaleza
     call printf
 
-    ;call flush
-
-    mov rdi, input_elegir_primer_jugador
+    mov rdi, input_elegir_rotar_tablero
     mov rsi, buffer_elegir_si_rotar
     call scanf
 
     cmp byte[buffer_elegir_si_rotar], "n"
     je .finalizar
+
+    cmp byte[buffer_elegir_si_rotar], "y"
+    je .preguntar_posicion
+
+    ; si llegue aqui es porque ninguna de las opciones es valida
+    mov rdi, msg_err_seleccion
+    call printf
+    jmp elegir_posicion_fortaleza
 
     .preguntar_posicion:
     mov rdi, msg_elegir_posicion_fortaleza
@@ -507,45 +493,16 @@ elegir_orientacion_tablero:
     call scanf
 
     cmp byte [buffer_posicion_fortaleza], "^"
-    je .posicionar_arriba
-    cmp byte [buffer_posicion_fortaleza], ">"
-    je .posicionar_derecha
+    je .finalizar
     cmp byte [buffer_posicion_fortaleza], "v"
-    je .posicionar_abajo
-    cmp byte [buffer_posicion_fortaleza], "<"
-    je .posicionar_izquierda
+    je .finalizar
 
     ; si llegue aqui es porque ninguna de las opciones es valida
     mov rdi, msg_err_seleccion
     call printf
     jmp .preguntar_posicion
 
-    .posicionar_arriba:
-    ; call tablero_rotar_90
-    ; mov rdi, 0
-    jmp .finalizar
-
-    .posicionar_derecha:
-    ; call tablero_rotar_90
-    ; call tablero_rotar_90
-    ; call tablero_rotar_90
-    ; mov rdi, 0
-    jmp .finalizar
-
-    .posicionar_abajo:
-    ; call tablero_rotar_90
-    ; call tablero_rotar_90
-    ; mov rdi, 0
-    jmp .finalizar
-
-    .posicionar_izquierda:
-    jmp .finalizar
-
     .finalizar:
-    ; no hay necesidad de llamar a tablero_actualizar, porque igual esto se
-    ; configura antes de que el tablero se inicialice, entonces el tablero
-    ; siempre va a arrancar con las posicion elegida
-
     ret
 
 guardar_partida:
