@@ -1,6 +1,4 @@
     global main
-    global buffer_simbolo_oficiales
-    global buffer_simbolo_soldados
 
     extern fclose
     extern fflush
@@ -57,8 +55,6 @@
     msg_elegir_primer_jugador db 10,0x1b,"[1m"," • ¿Quién mueve primero? [ 1 oficiales | 2 soldados ]: ",0x1b,"[0m",0
     msg_elegir_si_rotar_tablero db 10,0x1b,"[1m"," • ¿Desea rotar el tablero? [Y/n]: ",0x1b,"[0m",0
     msg_elegir_posicion_fortaleza db 10,0x1b,"[1m"," • ¿En qué posición querés ubicar la fortaleza? [ ^ arriba | > derecha | v abajo | < izquierda ]: ",0x1b,"[0m",0
-    msg_elegir_simbolos_oficiales db 10,0x1b,"[1m"," • Ingresá el símbolo para los oficiales: ♠(1) ♥(2) ♣(3) ♦(4) ♪(5) ★(6)",0x1b,"[0m",0
-    msg_elegir_simbolos_soldados db 10,0x1b,"[1m"," • Ingresá el símbolo para los soldados: ♠(1) ♥(2) ♣(3) ♦(4) ♪(5) ★(6)",0x1b,"[0m",0
 
     msg_seleccion_opcion db 10," - Seleccione una opción: ",0
     msg_err_seleccion MENSAJE_ERROR " Opción seleccionada no es válida "
