@@ -54,14 +54,13 @@
     msg_continuar_partida_anterior db 10,"¿Continuar partida anterior? [Y/n]: ",0
     msg_personalizacion MENSAJE_RESALTADO " Personalizá tu partida "
 
-    msg_elegir_primer_jugador db 10,0x1b,"[1m"," • ¿Quién mueve primero? [ 1 oficiales | 2 soldados ]: ",0x1b,"[0m",0
+    msg_elegir_primer_jugador db 10,0x1b,"[1m"," • ¿Quién mueve primero? oficiales(1) soldados(2): ",0x1b,"[0m",0
     msg_elegir_si_cambiar_fortaleza db 10,0x1b,"[1m"," • ¿Desea cambiar la posicion de la fortaleza? [Y/n]: ",0x1b,"[0m",0
-    msg_elegir_posicion_fortaleza db 10,0x1b,"[1m"," • ¿En qué posición querés ubicar la fortaleza? [ ^ arriba | v abajo ]: ",0x1b,"[0m",0
-    msg_elegir_simbolos_oficiales db 10,0x1b,"[1m"," • Ingresá el símbolo para los oficiales: ♠(1) ♥(2) ♣(3) ♦(4) ♪(5) ★(6)",0x1b,"[0m",0
-    msg_elegir_simbolos_soldados db 10,0x1b,"[1m"," • Ingresá el símbolo para los soldados: ♠(1) ♥(2) ♣(3) ♦(4) ♪(5) ★(6)",0x1b,"[0m",0
-
-    msg_seleccion_opcion db 10," - Seleccione una opción: ",0
+    msg_elegir_posicion_fortaleza db 10,0x1b,"[1m"," • ¿En qué posición querés ubicar la fortaleza? arriba(^) abajo(v): ",0x1b,"[0m",0
+    msg_elegir_simbolos_oficiales db 10,0x1b,"[1m"," • Ingresá el símbolo para los oficiales ♠(1) ♥(2) ♣(3) ♦(4) ♪(5) ★(6): ",0x1b,"[0m",0
+    msg_elegir_simbolos_soldados db 10,0x1b,"[1m"," • Ingresá el símbolo para los soldados ♠(1) ♥(2) ♣(3) ♦(4) ♪(5) ★(6): ",0x1b,"[0m",0
     msg_err_seleccion MENSAJE_ERROR " Opción seleccionada no es válida "
+    msg_err_seleccion_simbolo_repetido MENSAJE_ERROR " Elegí un símbolo diferente para los soldados "
 
     msg_turno_soldado MENSAJE_RESALTADO " Turno de los soldados "
     msg_turno_oficial MENSAJE_RESALTADO " Turno de los oficiales "
@@ -460,12 +459,45 @@ elegir_simbolos:
     mov rsi, buffer_simbolo_oficiales
     call scanf
 
+    cmp byte [buffer_simbolo_oficiales], "1"
+    jl .simbolo_oficial_invalido
+    cmp byte [buffer_simbolo_oficiales], "6"
+    jg .simbolo_oficial_invalido
+
+    jmp .elegir_simbolo_soldados
+
+    .simbolo_oficial_invalido:
+    mov rdi, msg_err_seleccion
+    call printf
+    jmp elegir_simbolos
+
+    .elegir_simbolo_soldados:
     mov rdi, msg_elegir_simbolos_soldados
     call printf
 
     mov rdi, input_elegir_simbolo
     mov rsi, buffer_simbolo_soldados
     call scanf
+
+    cmp byte [buffer_simbolo_soldados], "1"
+    jl .simbolo_soldado_invalido
+    cmp byte [buffer_simbolo_soldados], "6"
+    jg .simbolo_soldado_invalido
+
+    mov al, byte [buffer_simbolo_soldados]
+    cmp byte [buffer_simbolo_oficiales], al
+    jne .finalizar
+
+    mov rdi, msg_err_seleccion_simbolo_repetido
+    call printf
+    jmp .elegir_simbolo_soldados
+
+    .simbolo_soldado_invalido:
+    mov rdi, msg_err_seleccion
+    call printf
+    jmp .elegir_simbolo_soldados
+
+    .finalizar:
 
     ret
 
