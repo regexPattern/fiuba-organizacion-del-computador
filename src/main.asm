@@ -51,14 +51,15 @@
     db "███████╗███████╗  ██║  ██║███████║██║  ██║███████╗██║   ╚██████╔╝",10
     db "╚══════╝╚══════╝  ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚══════╝╚═╝    ╚═════╝ ",10,0
 
-    msg_continuar_partida_anterior db 10,"¿Continuar partida anterior? [Y/n]: ",0
+    msg_continuar_partida_anterior db 10," • ¿Continuar partida anterior? [Y/n]: ",0
     msg_personalizacion MENSAJE_RESALTADO " Personalizá tu partida "
 
-    msg_elegir_primer_jugador db 10,0x1b,"[1m"," • ¿Quién mueve primero? oficiales(1) soldados(2): ",0x1b,"[0m",0
-    msg_elegir_si_cambiar_fortaleza db 10,0x1b,"[1m"," • ¿Desea cambiar la posicion de la fortaleza? [Y/n]: ",0x1b,"[0m",0
-    msg_elegir_posicion_fortaleza db 10,0x1b,"[1m"," • ¿En qué posición querés ubicar la fortaleza? arriba(^) abajo(v): ",0x1b,"[0m",0
-    msg_elegir_simbolos_oficiales db 10,0x1b,"[1m"," • Ingresá el símbolo para los oficiales ♠(1) ♥(2) ♣(3) ♦(4) ♪(5) ★(6): ",0x1b,"[0m",0
-    msg_elegir_simbolos_soldados db 10,0x1b,"[1m"," • Ingresá el símbolo para los soldados ♠(1) ♥(2) ♣(3) ♦(4) ♪(5) ★(6): ",0x1b,"[0m",0
+    msg_elegir_si_personalizar db 10,0x1b,"[1m"," • ¿Desea personalizar la partida? [y/N]: ",0x1b,"[0m",0
+    msg_elegir_primer_jugador db 10,0x1b,"[1m"," • ¿Quién mueve primero? [ 1 oficiales | 2 soldados ]: ",0x1b,"[0m",0
+    msg_elegir_posicion_fortaleza db 10,0x1b,"[1m"," • ¿En qué posición querés ubicar la fortaleza? [ ^ arriba | > derecha | v abajo | < izquierda ]: ",0x1b,"[0m",0
+    msg_elegir_simbolos_oficiales db 10,0x1b,"[1m"," • Ingresá el símbolo para los oficiales [ 1 ♠ | 2 ♥ | 3 ♣ | 4 ♦ | 5 ♪ | 6 ★ ]: ",0x1b,"[0m",0
+    msg_elegir_simbolos_soldados db 10,0x1b,"[1m"," • Ingresá el símbolo para los soldados [ 1 ♠ | 2 ♥ | 3 ♣ | 4 ♦ | 5 ♪ | 6 ★ ]: ",0x1b,"[0m",0
+
     msg_err_seleccion MENSAJE_ERROR " Opción seleccionada no es válida "
     msg_err_seleccion_simbolo_repetido MENSAJE_ERROR " Elegí un símbolo diferente para los soldados "
 
@@ -76,16 +77,14 @@
 
     ansi_limpiar_pantalla db 0x1b,"[2J",0x1b,"[H",0
 
-    input_cargar_partida_guardada db " %c",0
-    input_elegir_primer_jugador db " %c",0
-    input_elegir_simbolo db " %c", 0
-    input_elegir_rotar_tablero db " %c",0
-    input_elegir_posicion_fortaleza db " %c",0
-    input_continuar_partida_actual db " %c",0
+    input_opcion_char db " %c",0
 
     path_archivo_partida db "partida.dat",0
     modo_lectura_archivo_partida db "rb",0
     modo_escritura_archivo_partida db "wb+",0
+
+    buffer_simbolo_oficiales db "0" ; guarda el icono de los oficiales
+    buffer_simbolo_soldados db "0"  ; guarda el icono de los soldados
 
     section .bss
 
@@ -93,15 +92,13 @@
     es_turno_soldado resb 1               ; bandera para alternar turnos (1 = soldado, 0 = oficial)
 
     buffer_cargar_partida resb 1           ; guardar el valor de la respuesta de la carga de partida anterior
+    buffer_elegir_si_personalizar resb 1
     buffer_elegir_primer_jugador resb 1    ; guarda el valor de la respuesta de que jugador empieza
-    buffer_simbolo_oficiales resb 1        ; guarda el icono de los oficiales
-    buffer_simbolo_soldados resb 1         ; guarda el icono de los soldados
     buffer_continuar_partida_actual resb 1 ; guarda el valor de la respuesta a si se desea continuar la partida actual o salir del juego
     buffer_celda_seleccionada resb 1       ; guarda la celda seleccionada en un turno
     buffer_prox_celda_seleccionada resb 1  ; guarda la celda a la que se va a mover el jugador del turno
-    buffer_elegir_si_rotar resb 1          ; guarda el valor de la respuesta a si se desea rotar el tablero
 
-    file_desc_archivo_partida resq 1      ; file descriptor archivo partida
+    file_desc_archivo_partida resq 1 ; file descriptor archivo partida
 
     section .text
 
@@ -350,7 +347,7 @@ mostrar_msg_continuar_partida_actual:
     mov rdi, 0
     call fflush
 
-    mov rdi, input_continuar_partida_actual
+    mov rdi, input_opcion_char
     mov rsi, buffer_continuar_partida_actual
     call scanf
 
@@ -375,7 +372,7 @@ partida_inicializar:
     mov rdi, 0
     call fflush
 
-    mov rdi, input_cargar_partida_guardada
+    mov rdi, input_opcion_char
     mov rsi, buffer_cargar_partida
     call scanf
 
@@ -407,14 +404,19 @@ partida_inicializar:
     ret
 
     .nueva_partida:
-    ; eliminamos el archivo de partida anterior
-    ; TODO: en este caso deberiamos iniciar con los valores por defecto? Si,
-    ; pero no hay necesidad de generarlos dinamicamente aca o si? Probablemente
-    ; si, en funcion de la customizacion que se elija
     mov rdi, path_archivo_partida
     call remove
 
-    ; iniciamos la personalizacion de la nueva partida
+    mov rdi, msg_elegir_si_personalizar
+    call printf
+
+    mov rdi, input_opcion_char
+    mov rsi, buffer_elegir_si_personalizar
+    call scanf
+
+    cmp byte [buffer_elegir_si_personalizar], "y"
+    jne .finalizar
+
     mov rdi, msg_personalizacion
     call printf
 
@@ -424,13 +426,15 @@ partida_inicializar:
     call elegir_posicion_fortaleza
     add rsp, 8
 
+    .finalizar:
+
     ret
 
 elegir_primer_jugador:
     mov rdi, msg_elegir_primer_jugador
     call printf
 
-    mov rdi, input_elegir_primer_jugador
+    mov rdi, input_opcion_char
     mov rsi, buffer_elegir_primer_jugador
     call scanf
 
@@ -455,7 +459,7 @@ elegir_simbolos:
     mov rdi, msg_elegir_simbolos_oficiales
     call printf
 
-    mov rdi, input_elegir_simbolo
+    mov rdi, input_opcion_char
     mov rsi, buffer_simbolo_oficiales
     call scanf
 
@@ -475,7 +479,7 @@ elegir_simbolos:
     mov rdi, msg_elegir_simbolos_soldados
     call printf
 
-    mov rdi, input_elegir_simbolo
+    mov rdi, input_opcion_char
     mov rsi, buffer_simbolo_soldados
     call scanf
 
@@ -484,6 +488,7 @@ elegir_simbolos:
     cmp byte [buffer_simbolo_soldados], "6"
     jg .simbolo_soldado_invalido
 
+    ; no elegir el mismo icono
     mov al, byte [buffer_simbolo_soldados]
     cmp byte [buffer_simbolo_oficiales], al
     jne .finalizar
@@ -502,29 +507,10 @@ elegir_simbolos:
     ret
 
 elegir_posicion_fortaleza:
-    mov rdi, msg_elegir_si_cambiar_fortaleza
-    call printf
-
-    mov rdi, input_elegir_rotar_tablero
-    mov rsi, buffer_elegir_si_rotar
-    call scanf
-
-    cmp byte[buffer_elegir_si_rotar], "n"
-    je .finalizar
-
-    cmp byte[buffer_elegir_si_rotar], "y"
-    je .preguntar_posicion
-
-    ; si llegue aqui es porque ninguna de las opciones es valida
-    mov rdi, msg_err_seleccion
-    call printf
-    jmp elegir_posicion_fortaleza
-
-    .preguntar_posicion:
     mov rdi, msg_elegir_posicion_fortaleza
     call printf
 
-    lea rdi, input_elegir_posicion_fortaleza
+    lea rdi, input_opcion_char
     lea rsi, buffer_posicion_fortaleza
     call scanf
 
@@ -533,10 +519,9 @@ elegir_posicion_fortaleza:
     cmp byte [buffer_posicion_fortaleza], "v"
     je .finalizar
 
-    ; si llegue aqui es porque ninguna de las opciones es valida
     mov rdi, msg_err_seleccion
     call printf
-    jmp .preguntar_posicion
+    jmp elegir_posicion_fortaleza
 
     .finalizar:
     ret

@@ -16,26 +16,19 @@
     extern scanf
     extern buffer_simbolo_oficiales
     extern buffer_simbolo_soldados
+    extern setlocale
 
     extern array_movimientos_posibles
 
     %define CANTIDAD_COLUMNAS 7
     %define CANTIDAD_ELEMENTOS 49
-    %define LONGITUD_CELDA_ASCII 29
+    %define LONGITUD_CELDA_ASCII 30
 
     %macro MENSAJE_RESALTADO 1
     db 10,0x1b,"[38;5;231;48;5;9m",%1,0x1b,"[0m",10,0
     %endmacro
 
     section .data
-
-    ;tablero_aba     db ' ', ' ', ' ', 'X', 'X', ' ', ' '
-    ;                db ' ', ' ', ' ', 'X', 'X', ' ', ' '
-    ;                db 'X', 'X', ' ', ' ', ' ', ' ', ' '
-    ;                db 'X', 'X', ' ', ' ', ' ', ' ', ' '
-    ;                db 'X', 'X', ' ', ' ', ' ', ' ', ' '
-    ;                db ' ', ' ', 'X', ' ', 'O', ' ', ' '
-    ;                db ' ', ' ', 'O', ' ', ' ', ' ', ' '
 
     tablero_aba     db ' ', ' ', 'X', 'X', 'X', ' ', ' '
                     db ' ', ' ', 'X', 'X', 'X', ' ', ' '
@@ -48,31 +41,22 @@
     tablero_arr     db ' ', ' ', ' ', ' ', 'O', ' ', ' '
                     db ' ', ' ', 'O', ' ', ' ', ' ', ' '
                     db 'X', 'X', ' ', ' ', ' ', 'X', 'X'
-                    db 'X', 'X', 'X', 'X', 'X', 'X', 'X'
-                    db 'X', 'X', 'X', 'X', 'X', 'X', 'X'
-                    db ' ', ' ', 'X', 'X', 'X', ' ', ' '
-                    db ' ', ' ', 'X', 'X', 'X', ' ', ' '
+                    db 'X', 'X', ' ', ' ', 'X', 'X', 'X'
+                    db 'X', 'X', ' ', ' ', 'X', 'X', 'X'
+                    db ' ', ' ', ' ', ' ', 'X', ' ', ' '
+                    db ' ', ' ', ' ', ' ', 'X', ' ', ' '
 
 
     icono_esq_vacia db "   ",0
     salto_linea db 10,0
 
-    iconoPicas db 0x1b,"[38;5;000;48;5;051m ♠ ",0x1b,"[0m",0
-    iconoPicasSombreado db 0x1b,"[38;5;000;48;5;037m ♠ ",0x1b,"[0m",0
-    iconoCorazon db 0x1b,"[38;5;000;48;5;051m ♥ ",0x1b,"[0m",0
-    iconoCorazonSombreado: db 0x1b,"[38;5;000;48;5;037m ♥ ",0x1b,"[0m",0
-    iconoTrebol db 0x1b,"[38;5;000;48;5;051m ♣ ",0x1b,"[0m",0
-    iconoTrebolSombreado db 0x1b,"[38;5;000;48;5;037m ♣ ",0x1b,"[0m",0
-    iconoRombo db 0x1b,"[38;5;000;48;5;051m ♦ ",0x1b,"[0m",0
-    iconoRomboSombreado db 0x1b,"[38;5;000;48;5;037m ♦ ",0x1b,"[0m",0
-    iconoMusica db 0x1b,"[38;5;000;48;5;051m ♪ ",0x1b,"[0m",0
-    iconoMusicaSombreado db 0x1b,"[38;5;000;48;5;037m ♪ ",0x1b,"[0m",0
-    iconoEstrella db 0x1b,"[38;5;000;48;5;051m ★ ",0x1b,"[0m",0
-    iconoEstrellaSombreado db 0x1b,"[38;5;000;48;5;037m ★ ",0x1b,"[0m",0
+    ;                        "♠",   "♥",   "♣",   "♦",   "♩",   "★"
+    iconos_oficiales dw "O",0x2660,0x2665,0x2663,0x2666,0x2669,0x2605
+    iconos_soldados  dw "X",0x2660,0x2665,0x2663,0x2666,0x2669,0x2605
 
     ; sequencias ANSI
-    ansi_label_celda db 0x1b,"[38;5;033;00000049m %c ",0x1b,"[0m",0
-    ansi_celda_seleccionada db 0x1b,"[38;5;000;48;5;033m %c ",0x1b,"[0m",0
+    ansi_label_celda db 0x1b,"[38;5;033;00000049m %lc ",0x1b,"[0m",0
+    ansi_celda_seleccionada db 0x1b,"[38;5;000;48;5;033m %lc ",0x1b,"[0m",0
     ansi_limpiar_linea db 0x1b,"[%i;0H",0x1b,"[K",0
     ansi_guardar_pos_cursor db 0x1b,"[s",0
     ansi_restaurar_pos_cursor db 0x1b,"[u",0
@@ -84,6 +68,8 @@
     path_archivo_tablero_derecha db "./static/tablero-der.dat",0
     path_archivo_tablero_izquierda db "./static/tablero-izq.dat",0
     modo_lectura_archivo_tablero db "rb",0
+
+    locale db "en_US.UTF-8",0
 
     section .bss
 
@@ -132,6 +118,11 @@ tablero_inicializar:
     mov rsi, modo_lectura_archivo_tablero
     call fopen
     mov [file_desc_archivo_tablero], rax
+
+    ; habilito la opcion para imprimir caracteres UNICODE UTF-16
+    mov rdi, 0
+    mov rsi, locale
+    call setlocale
 
     ret
 
@@ -246,16 +237,28 @@ tablero_renderizar:
     mov rdi, buffer_ansi_celda
 
     .renderizar_celda:
-    ; acabo de cargar rdi y recordemos que rsi lo cargue en
-    ; .continue_renderizar_celda
-    ;
-    cmp byte [buffer_posicion_fortaleza], "^"
-    je  .cambiar_fichas_tablero_girado
-    cmp rsi, 'X'
-    je  .cambiar_fichas_soldado
-    cmp rsi, 'O'
-    je  .cambiar_fichas_oficial
-    .continuar_con_nuevas_fichas:
+    ; acabo de cargar rdi y recordemos que rsi lo cargue con 'X' o 'O' (leido directamente desde el array de bytes del tablero)
+    .cargar_icono_oficial:
+    cmp rsi, "O"
+    jne .cargar_icono_soldado
+
+    movzx rbp, byte [buffer_simbolo_oficiales]
+    sub rbp, "0"
+    imul rbp, 2
+    movzx rsi, word [iconos_oficiales + rbp]
+
+    jmp .cargar_icono
+
+    .cargar_icono_soldado:
+    cmp rsi, "X"
+    jne .cargar_icono
+
+    movzx rbp, byte [buffer_simbolo_soldados]
+    sub rbp, "0"
+    imul rbp, 2
+    movzx rsi, word [iconos_soldados + rbp]
+
+    .cargar_icono:
     call printf
 
     inc r13
@@ -282,156 +285,6 @@ tablero_renderizar:
 
     ret
 
-    ; cierra el archivo del tablero correspondiente a la posicion de la fortaleza
-    ;
-    .cambiar_fichas_soldado:
-        cmp r14, 30
-        jge .cambiar_fichas_soldado_sombreado
-
-        .fichas_sin_sombrear:
-        cmp byte[buffer_simbolo_soldados], '1'
-        je  .cargar_picas
-        cmp byte[buffer_simbolo_soldados], '2'
-        je  .cargar_corazon
-        cmp byte[buffer_simbolo_soldados], '3'
-        je  .cargar_trebol
-        cmp byte[buffer_simbolo_soldados], '4'
-        je  .cargar_rombo
-        cmp byte[buffer_simbolo_soldados], '5'
-        je  .cargar_musica
-        cmp byte[buffer_simbolo_soldados], '6'
-        je  .cargar_estrella
-
-        .cargar_picas:
-        mov rdi, iconoPicas
-        jmp .continuar_con_nuevas_fichas
-
-        .cargar_corazon:
-        mov rdi, iconoCorazon
-        jmp .continuar_con_nuevas_fichas
-
-        .cargar_trebol:
-        mov rdi, iconoTrebol
-        jmp .continuar_con_nuevas_fichas
-
-        .cargar_rombo:
-        mov rdi, iconoRombo
-        jmp .continuar_con_nuevas_fichas
-
-        .cargar_musica:
-        mov rdi, iconoMusica
-        jmp .continuar_con_nuevas_fichas
-
-        .cargar_estrella:
-        mov rdi, iconoEstrella
-        jmp .continuar_con_nuevas_fichas
-    
-    .cambiar_fichas_soldado_sombreado:
-        cmp r14, 33
-        je  .fichas_sin_sombrear
-        cmp r14, 34
-        je  .fichas_sin_sombrear
-        .fichas_sombreadas:
-        cmp byte[buffer_simbolo_soldados], '1'
-        je  .cargar_picas_sombredas
-        cmp byte[buffer_simbolo_soldados], '2'
-        je  .cargar_corazon_sombredas
-        cmp byte[buffer_simbolo_soldados], '3'
-        je  .cargar_trebol_sombredas
-        cmp byte[buffer_simbolo_soldados], '4'
-        je  .cargar_rombo_sombredas
-        cmp byte[buffer_simbolo_soldados], '5'
-        je  .cargar_musica_sombredas
-        cmp byte[buffer_simbolo_soldados], '6'
-        je  .cargar_estrella_sombredas
-
-        .cargar_picas_sombredas:
-        mov rdi, iconoPicasSombreado
-        jmp .continuar_con_nuevas_fichas
-
-        .cargar_corazon_sombredas:
-        mov rdi, iconoCorazonSombreado
-        jmp .continuar_con_nuevas_fichas
-
-        .cargar_trebol_sombredas:
-        mov rdi, iconoTrebolSombreado
-        jmp .continuar_con_nuevas_fichas
-
-        .cargar_rombo_sombredas:
-        mov rdi, iconoRomboSombreado
-        jmp .continuar_con_nuevas_fichas
-
-        .cargar_musica_sombredas:
-        mov rdi, iconoMusicaSombreado
-        jmp .continuar_con_nuevas_fichas
-
-        .cargar_estrella_sombredas:
-        mov rdi, iconoEstrellaSombreado
-        jmp .continuar_con_nuevas_fichas
-    
-    .cambiar_fichas_oficial:
-        cmp r14, 30
-        jge .cambiar_fichas_oficial_sombreado
-
-        .fichas_sin_sombrear_oficial:
-        cmp byte[buffer_simbolo_oficiales], '1'
-        je  .cargar_picas
-        cmp byte[buffer_simbolo_oficiales], '2'
-        je  .cargar_corazon
-        cmp byte[buffer_simbolo_oficiales], '3'
-        je  .cargar_trebol
-        cmp byte[buffer_simbolo_oficiales], '4'
-        je  .cargar_rombo
-        cmp byte[buffer_simbolo_oficiales], '5'
-        je  .cargar_musica
-        cmp byte[buffer_simbolo_oficiales], '6'
-        je  .cargar_estrella
-    
-    .cambiar_fichas_oficial_sombreado:
-        cmp r14, 33
-        je  .fichas_sin_sombrear_oficial
-        cmp r14, 34
-        je  .fichas_sin_sombrear
-        .fichas_sombreadas_oficial:
-        cmp byte[buffer_simbolo_oficiales], '1'
-        je  .cargar_picas_sombredas
-        cmp byte[buffer_simbolo_oficiales], '2'
-        je  .cargar_corazon_sombredas
-        cmp byte[buffer_simbolo_oficiales], '3'
-        je  .cargar_trebol_sombredas
-        cmp byte[buffer_simbolo_oficiales], '4'
-        je  .cargar_rombo_sombredas
-        cmp byte[buffer_simbolo_oficiales], '5'
-        je  .cargar_musica_sombredas
-        cmp byte[buffer_simbolo_oficiales], '6'
-        je  .cargar_estrella_sombredas
-    
-    .cambiar_fichas_tablero_girado:
-        cmp rsi, 'X'
-        je  .cambiar_fichas_soldado_tablero_girado
-        cmp  rsi, 'O'
-        je  .cambiar_fichas_oficial_tablero_girado
-        jmp .continuar_con_nuevas_fichas
-        .cambiar_fichas_soldado_tablero_girado:
-            cmp r14, 18
-            jle .cambiar_fichas_soldado_sombreado_girado
-            jmp .fichas_sin_sombrear
-            .cambiar_fichas_soldado_sombreado_girado:
-            cmp r14, 14
-            je .fichas_sin_sombrear
-            cmp r14, 15
-            je .fichas_sin_sombrear
-            jmp .fichas_sombreadas
-        .cambiar_fichas_oficial_tablero_girado:
-            cmp r14, 18
-            jle .cambiar_fichas_oficial_sombreado_girado
-            jmp .fichas_sin_sombrear_oficial
-            .cambiar_fichas_oficial_sombreado_girado:
-            cmp r14, 14
-            je .fichas_sin_sombrear_oficial
-            cmp r14, 15
-            je .fichas_sin_sombrear_oficial
-            jmp .fichas_sombreadas_oficial
 tablero_finalizar:
     mov rdi, [file_desc_archivo_tablero]
     call fclose
