@@ -371,20 +371,29 @@ cargar_movimientos_oficial:
     ; movimiento invalido. (este sería el checkeo de las aspas tanto verticales
     ; como horizontales).
     ;
-    ; matriz 2x2 esquina superior izquierda
+    ; matriz 2x2 esquina superior izquierda (cuando estoy en aspa < o ^)
+    ;
     cmp rax, 2 ; fila
-    jge .check_mov_arriba_matriz_inferior_izquierda
+    jge .check_mov_diag_arr_izq_matriz_inferior_izquierda ; no corro el riesgo de caer en esta matriz
     cmp rdx, 2 ; col
-    jge .check_mov_arriba_matriz_inferior_izquierda
+    jge .check_mov_diag_arr_izq_matriz_inferior_izquierda ; no corro el riesgo de caer en esta matriz
     jmp .check_limites_diagonal_arriba_derecha ; acá fila <= 1 && col <= 1
 
-    ; matriz 2x2 esquina inferior izquierda
-    .check_mov_arriba_matriz_inferior_izquierda:
+    ; matriz 2x2 esquina inferior izquierda (cuando estoy en v)
+    .check_mov_diag_arr_izq_matriz_inferior_izquierda:
     cmp rax, 5 ; fila
-    jl .check_normal_arriba_izquierda
+    jl .check_mov_diag_arr_izq_matriz_superior_derecha
     cmp rdx, 2 ; col
-    jge .check_normal_arriba_izquierda
+    jge .check_mov_diag_arr_izq_matriz_superior_derecha
     jmp .check_limites_diagonal_arriba_derecha ; acá fila >= 5 && col <= 1
+
+    ; matriz 2x2 superior derecha (cuando estoy en >)
+    .check_mov_diag_arr_izq_matriz_superior_derecha:
+    cmp rax, 2
+    jge .check_normal_arriba_izquierda
+    cmp rdx, 5
+    jl .check_normal_arriba_izquierda
+    jmp .check_limites_diagonal_arriba_derecha
 
     .check_normal_arriba_izquierda:
     cmp byte [tablero + r11], ' '
@@ -414,19 +423,29 @@ cargar_movimientos_oficial:
     jle .check_limites_diagonal_abajo_derecha
 
     ; Checkeo de las matrices 2x2 en las esquinas
-    ; matriz 2x2 esquina superior derecha
-    cmp rax, 2 ; fila
-    jge .check_mov_arriba_matriz_inferior_derecha
-    cmp rdx, 4 ; col
-    jle .check_mov_arriba_matriz_inferior_derecha
-    jmp .check_limites_diagonal_abajo_derecha ; acá fila <= 1 && col >= 5
 
-    .check_mov_arriba_matriz_inferior_derecha:
-    cmp rax, 5 ; fila
-    jl .check_normal_arriba_derecha
-    cmp rdx, 4 ; col
-    jle .check_normal_arriba_derecha
-    jmp .check_limites_diagonal_abajo_derecha ; acá fila >= 5 && col >= 5
+    ; matriz 2x2 esquina superior derecha (para el caso en el que este en la aspa > o ^)
+    cmp rax, 2 ; nueva fila
+    jge .check_mov_diag_arr_der_matriz_inferior_derecha ; no corremos el riesgo de caer en esta matriz
+    cmp rdx, 4 ; nueva col
+    jle .check_mov_diag_arr_der_matriz_inferior_derecha ; no corremos el riesgo de caer en esta matriz
+    jmp .check_limites_diagonal_abajo_derecha ; acá nueva fila <= 1 && nueva col >= 5 (caigo en la matriz)
+
+    ; matriz 2x2 esquina inferior derecha (para el caso en el que este en la aspa v)
+    .check_mov_diag_arr_der_matriz_inferior_derecha:
+    cmp rax, 5 ; nueva fila
+    jl .check_mov_diag_arr_der_matriz_superior_izquierda ; no corremos el riesgo de caer en esta matriz
+    cmp rdx, 4 ; nueva col
+    jle .check_mov_diag_arr_der_matriz_superior_izquierda ; no corremos el riesgo de caer en esta matriz
+    jmp .check_limites_diagonal_abajo_derecha ; acá nueva fila >= 5 && nueva col >= 5 (caigo en la matriz)
+
+    .check_mov_diag_arr_der_matriz_superior_izquierda:
+    ; matriz 2x2 esquina superior izquierda (para el caso en el que este en la aspa <)
+    cmp rax, 2
+    jge .check_normal_arriba_derecha
+    cmp rdx, 2
+    jge .check_normal_arriba_derecha 
+    jmp .check_limites_diagonal_abajo_derecha ; caemos en la matriz, no hay movimiento en esta direccion
 
     .check_normal_arriba_derecha:
     cmp byte [tablero + r11], ' '
@@ -434,7 +453,7 @@ cargar_movimientos_oficial:
     mov byte [array_movimientos_posibles + rcx], r11b
     inc rcx
 
-    ; ========== ↙ DIAGONAL ABAJO DERECHA ↙ ==========
+    ; ========== ↘ DIAGONAL ABAJO DERECHA ↘ ==========
     .check_limites_diagonal_abajo_derecha:
     mov r11, rdi
     add r11, 8
@@ -455,19 +474,27 @@ cargar_movimientos_oficial:
     jle .check_limites_diagonal_abajo_izquierda
 
     ; Checkeo de las matrices 2x2 en las esquinas
-    ; matriz 2x2 esquina superior derecha
+
+    ; matriz 2x2 esquina superior derecha (cuando estamos en el aspa ^)
     cmp rax, 2 ; fila
-    jge .check_mov_abajo_matriz_inferior_derecha
+    jge .check_mov_diag_aba_der_matriz_inferior_derecha
     cmp rdx, 4 ; col
-    jle .check_mov_abajo_matriz_inferior_derecha
+    jle .check_mov_diag_aba_der_matriz_inferior_derecha
     jmp .check_limites_diagonal_abajo_izquierda ; acá fila <= 1 && col >= 5
 
-    .check_mov_abajo_matriz_inferior_derecha:
+    .check_mov_diag_aba_der_matriz_inferior_derecha: ; (cuando estamos en el aspa v o >)
     cmp rax, 5 ; fila
-    jl .check_normal_abajo_derecha
+    jl .check_mov_diag_aba_der_matriz_inferior_izquierda
     cmp rdx, 4 ; col
-    jle .check_normal_abajo_derecha
+    jle .check_mov_diag_aba_der_matriz_inferior_izquierda
     jmp .check_limites_diagonal_abajo_izquierda ; acá fila >= 5 && col >= 5
+
+    .check_mov_diag_aba_der_matriz_inferior_izquierda: ; (cuando estamos en el aspa <)
+    cmp rax, 5
+    jl .check_normal_abajo_derecha
+    cmp rdx, 2
+    jge .check_normal_abajo_derecha
+    jmp .check_limites_diagonal_abajo_izquierda
 
     .check_normal_abajo_derecha:
     cmp byte [tablero + r11], ' '
@@ -475,7 +502,7 @@ cargar_movimientos_oficial:
     mov byte [array_movimientos_posibles + rcx], r11b
     inc rcx
 
-    ; ========== ↘ DIAGONAL ABAJO IZQUIERDA ↘ ==========
+    ; ========== ↙ DIAGONAL ABAJO IZQUIERDA ↙ ==========
     .check_limites_diagonal_abajo_izquierda:
     mov r11, rdi
     add r11, 6
@@ -497,19 +524,26 @@ cargar_movimientos_oficial:
 
     ; Si caemos en el cuadrado 2x2 de la esquina superior o inferior izquierda es un
     ; movimiento invalido.
-    ; matriz 2x2 esquina superior izquierda
+    ; matriz 2x2 esquina superior izquierda (cuando estamos en aspa ^)
     cmp rax, 2 ; fila
-    jge .check_mov_abajo_matriz_inferior_izquierda
+    jge .check_mov_diag_aba_izq_matriz_inferior_izquierda
     cmp rdx, 2 ; col
-    jge .check_mov_abajo_matriz_inferior_izquierda
-    jmp .finalizar ; acá fila <= 1 && col <= 1
+    jge .check_mov_diag_aba_izq_matriz_inferior_izquierda
+    jmp .finalizar ; acá nueva fila <= 1 && nueva col <= 1 (no hay movimientos valido en esta dir)
 
-    .check_mov_abajo_matriz_inferior_izquierda:
+    .check_mov_diag_aba_izq_matriz_inferior_izquierda: ; (cuando estamos en aspa < y v)
     cmp rax, 5 ; fila
-    jl .check_normal_abajo_izquierda
+    jl .check_mov_diag_aba_izq_matriz_inferior_derecha
     cmp rdx, 2 ; col
-    jge .check_normal_abajo_izquierda
-    jmp .finalizar ; acá fila >= 5 && col <= 1
+    jge .check_mov_diag_aba_izq_matriz_inferior_derecha
+    jmp .finalizar ; acá nueva fila >= 5 && nueva col <= 1 (no hay movimiento valido en esta dir)
+
+    .check_mov_diag_aba_izq_matriz_inferior_derecha: ; (cuando estamos en aspa >)
+    cmp rax, 5
+    jl .check_normal_abajo_izquierda
+    cmp rdx, 5
+    jl .check_normal_abajo_izquierda
+    jmp .finalizar
 
     .check_normal_abajo_izquierda:
     cmp byte [tablero + r11], ' '

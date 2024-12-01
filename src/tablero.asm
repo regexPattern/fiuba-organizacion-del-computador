@@ -15,7 +15,6 @@
     extern scanf
     extern simbolo_oficiales
     extern simbolo_soldados
-    extern setlocale
     extern pos_oficial_1
     extern pos_oficial_2
 
@@ -31,7 +30,7 @@
 
     section .data
 
-    posicion_fortaleza db "^" ; posicion por defecto: abajo
+    posicion_fortaleza db "v" ; posicion por defecto: abajo
 
     tablero_arr db ' ', ' ', ' ', ' ', 'O', ' ', ' '
                 db ' ', ' ', 'O', ' ', ' ', ' ', ' '
@@ -83,8 +82,6 @@
     path_archivo_tablero_der db "./static/tablero-der.dat",0
     path_archivo_tablero_izq db "./static/tablero-izq.dat",0
     modo_lectura_archivo_tablero db "rb",0
-
-    locale db "en_US.UTF-8",0
 
     section .bss
 
@@ -149,11 +146,6 @@ tablero_inicializar:
     mov rsi, modo_lectura_archivo_tablero
     call fopen
     mov [file_desc_archivo_tablero], rax
-
-    ; habilito la opcion para imprimir caracteres UNICODE UTF-16
-    mov rdi, 0
-    mov rsi, locale
-    call setlocale
 
     ret
 
