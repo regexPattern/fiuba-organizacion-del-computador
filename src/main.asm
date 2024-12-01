@@ -55,7 +55,7 @@
     msg_continuar_partida_anterior db 10," • ¿Continuar partida anterior? [Y/n]: ",0
     msg_personalizacion MENSAJE_RESALTADO " Personalizá tu partida "
 
-    msg_elegir_si_personalizar db 10,0x1b,"[1m"," • ¿Desea personalizar la partida? [y/N]: ",0x1b,"[0m",0
+    msg_elegir_si_personalizar db 10,0x1b,"[1m"," • ¿Desea personalizar la partida? [Y/n]: ",0x1b,"[0m",0
     msg_elegir_primer_jugador db 10,0x1b,"[1m"," • ¿Quién mueve primero? [ 1 oficiales | 2 soldados ]: ",0x1b,"[0m",0
     msg_elegir_posicion_fortaleza db 10,0x1b,"[1m"," • ¿En qué posición querés ubicar la fortaleza? [ ^ arriba | > derecha | v abajo | < izquierda ]: ",0x1b,"[0m",0
     msg_elegir_simbolos_oficiales db 10,0x1b,"[1m"," • Ingresá el símbolo para los oficiales: ",0x1b,"[0m",0
