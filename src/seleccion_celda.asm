@@ -35,12 +35,14 @@
     ; - rax: índice de la casilla a mover
     ;
 seleccionar_celda:
+    .seleccionar_fila:
     mov rdi, mensaje_sel_fila
     call printf
 
     mov rdi, input_fila
     mov rsi, buffer_fila_ingresada
     call scanf
+    jmp .validar_fila
 
     .seleccionar_columna:
     mov rdi, mensaje_sel_col
@@ -68,6 +70,12 @@ seleccionar_celda:
         cmp byte[buffer_col_ingresada], 71
         jg  .seleccionar_columna
         jmp .columna_validada
+    .validar_fila:
+        cmp byte[buffer_fila_ingresada], 1
+        jl .seleccionar_fila
+        cmp byte[buffer_fila_ingresada], 7
+        jg  .seleccionar_fila
+        jmp .seleccionar_columna
 seleccionar_proxima_celda:
     mov rdi, mensaje_celdas_disponibles
     call printf
