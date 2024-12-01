@@ -256,6 +256,8 @@ cargar_movimientos_soldado:
     mov byte [array_movimientos_posibles + rbp], r11b
     inc rbp
 
+    jmp .finalizar
+
     ; =====
     ; ASPAS
     ; =====
@@ -322,41 +324,62 @@ cargar_movimientos_soldado:
     inc rbp
     jmp .finalizar
 
-    ; TODO: acá estamos seguros de que no estamos en la última fila de la sección
-    ; horizontal de la cruz, por lo que, estando en el aspa izquierda, cualquier
-    ; movimiento diagonal a la derecha es válido a menos que esté ocupada esa
-    ; casilla
-    ; NOTE: movimiendos diagonales en las aspas
+    ; TODO: movimientos diagonales en las aspas
     ;
     .aspa_arriba:
+    mov rcx, 7 ; movimiento horizontal disponible (fila abajo)
+    jmp .aspa_vertical_fort_der
     .aspa_abajo:
+    mov rcx, -7 ; movimiento horizontal disponible (fila arriba)
 
-    .check_diagonal_izq_aspa_der:
-    ; solo diagonal izquierda
+    .aspa_vertical_fort_der:
+    cmp r10, ">"
+    jne .aspa_vertical_fort_izq
+    cmp r9, 4 ; estamos en la ultima columna del tronco vertical?
+    jne .aspa_vertical_fort_der_normal
+
+    ; si estamos en el limite, solo movimientos verticales
     mov r11, rdi
-    add r11, 6
+    add r11, rcx
     cmp byte [tablero + r11], ' '
     jne .finalizar
-    mov byte [array_movimientos_posibles + rcx], r11b
-    inc rcx
+    mov byte [array_movimientos_posibles + rbp], r11b
+    inc rbp
     jmp .finalizar
 
-    .agregar_mov_derecha:
+    ; aca sabemos que no estamos en el limite del aspa
+    .aspa_vertical_fort_der_normal:
     mov r11, rdi
-    inc r11
+    inc r11 ; aca solo estamos con > (fortaleza derecha)
+    cmp byte [tablero + r11], ' '
+    jne .finalizar ; TODO: ir a checks de diagonales
+    mov byte [array_movimientos_posibles + rbp], r11b
+    inc rbp
+    jmp .finalizar
+
+    .aspa_vertical_fort_izq:
+    ; sabemos que la fortaleza esta a la izquierda <
+    cmp r9, 2 ; estamos en el limite (primera columna del tronco vertical?)
+    jne .aspa_vertical_fort_izq_normal
+
+    ; estamos en el limite, solo movimientos verticales
+    mov r11, rdi
+    add r11, rcx
     cmp byte [tablero + r11], ' '
     jne .finalizar
-    mov byte [array_movimientos_posibles + rcx], r11b
-    inc rcx
+    mov byte [array_movimientos_posibles + rbp], r11b
+    inc rbp
     jmp .finalizar
 
-    .agregar_mov_izquierda:
+    ; no estamos en el limite y solo estamos con fort <
+    .aspa_vertical_fort_izq_normal:
     mov r11, rdi
     dec r11
     cmp byte [tablero + r11], ' '
-    jne .finalizar
-    mov byte [array_movimientos_posibles + rcx], r11b
-    inc rcx
+    jne .finalizar ; TODO: ir a checks de diagonales
+    mov byte [array_movimientos_posibles + rbp], r11b
+    inc rbp
+    jmp .finalizar
 
     .finalizar:
     mov r8, 12 ; tamaño máximo del arreglo
