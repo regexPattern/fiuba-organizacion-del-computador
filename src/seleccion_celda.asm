@@ -110,6 +110,7 @@ seleccionar_proxima_celda:
     mov rsi, buffer_fila_ingresada
     call scanf
 
+    .testing:
     mov al, byte [buffer_fila_ingresada] 
 
     cmp al, "1"

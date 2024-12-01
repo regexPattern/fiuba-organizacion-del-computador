@@ -181,6 +181,14 @@ main:
     cmp rax, 1
     je .efectuar_movimiento
 
+    ; la celda destino es invalida
+    mov rdi, msg_err_celda_invalida
+    sub rsp, 8
+    call printf
+    add rsp, 8
+
+    jmp .seleccionar_prox_celda
+
     .efectuar_movimiento:
     movzx rdi, byte [buffer_celda_seleccionada]
     movzx rsi, byte [buffer_prox_celda_seleccionada]
@@ -312,8 +320,28 @@ validar_celda_seleccionada:
     .finalizar:
     ret
 
-    ; descripción:
+    ; parámetros:
+    ; rdi - proxima celda seleccionada (celda destino)
+    ;
 validar_prox_celda_seleccionada:
+    mov rcx, 12 ; maximo de movimientos posibles a verificar
+    mov rbp, 0
+
+    .loop:
+    movzx r8, byte [array_movimientos_posibles + rbp]
+    cmp r8, 0 ; llegamos al fin y no encontramos el movimiento buscado
+    cmp r8, rdi ; si la celda seleccionada esta en las celdas posibles, es valida
+    je .celda_valida
+    inc rbp
+    loop .loop
+
+    ; si llegamos a los 12 tambien es invalido (no lo encontramos)
+    .celda_invalida:
+    mov rax, 0
+    ret
+
+    .celda_valida:
+    mov rax, 1
     ret
 
     ; descripción:
