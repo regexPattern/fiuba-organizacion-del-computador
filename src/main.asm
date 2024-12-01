@@ -19,6 +19,7 @@
     extern juego_terminado
     extern mostrar_estadisticas
     extern pos_oficial_1
+    extern pos_oficial_2
     extern buffer_posicion_fortaleza
     extern seleccionar_celda
     extern seleccionar_proxima_celda

@@ -17,6 +17,8 @@
     extern buffer_simbolo_oficiales
     extern buffer_simbolo_soldados
     extern setlocale
+    extern pos_oficial_1
+    extern pos_oficial_2
 
     extern array_movimientos_posibles
 
@@ -29,6 +31,8 @@
     %endmacro
 
     section .data
+
+    buffer_posicion_fortaleza db "^" ; posicion por defecto: abajo
 
     tablero_arr db ' ', ' ', ' ', ' ', 'O', ' ', ' '
                 db ' ', ' ', 'O', ' ', ' ', ' ', ' '
@@ -46,13 +50,13 @@
                 db ' ', ' ', 'X', 'X', 'X', ' ', ' '
                 db ' ', ' ', 'X', 'X', 'X', ' ', ' '
 
-    tablero_aba db ' ', ' ', ' ', ' ', ' ', ' ', ' '
-                db ' ', ' ', 'O', ' ', 'O', ' ', ' '
-                db 'X', 'X', ' ', ' ', ' ', 'X', 'X'
-                db 'X', 'X', ' ', ' ', ' ', 'X', 'X'
+    tablero_aba db ' ', ' ', 'X', 'X', 'X', ' ', ' '
+                db ' ', ' ', 'X', 'X', 'X', ' ', ' '
                 db 'X', 'X', 'X', 'X', 'X', 'X', 'X'
-                db ' ', ' ', 'X', 'X', 'X', ' ', ' '
-                db ' ', ' ', 'X', 'X', 'X', ' ', ' '
+                db 'X', 'X', 'X', 'X', 'X', 'X', 'X'
+                db 'X', 'X', ' ', ' ', ' ', 'X', 'X'
+                db ' ', ' ', ' ', ' ', 'O', ' ', ' '
+                db ' ', ' ', 'O', ' ', ' ', ' ', ' '
 
     tablero_izq db ' ', ' ', 'X', 'X', 'X', ' ', ' '
                 db ' ', ' ', 'X', 'X', 'X', ' ', ' '
@@ -75,8 +79,6 @@
     ansi_limpiar_linea db 0x1b,"[%i;0H",0x1b,"[K",0
     ansi_guardar_pos_cursor db 0x1b,"[s",0
     ansi_restaurar_pos_cursor db 0x1b,"[u",0
-
-    buffer_posicion_fortaleza db "v"
 
     path_archivo_tablero_aba db "./static/tablero-aba.dat",0
     path_archivo_tablero_arr db "./static/tablero-arr.dat",0
@@ -118,24 +120,32 @@ tablero_inicializar:
     lea rsi, [tablero_aba]          ; Direccion de tablero seleccionado (fuente)
     rep movsb
     mov rdi, path_archivo_tablero_aba ; para colorear la fortaleza abajo
+    mov byte [pos_oficial_1], 44 ; posicion inicial del oficial 1 en este layout
+    mov byte [pos_oficial_2], 39 ; posicion inicial del oficial 2 en este layout
     jmp .abrir_archivo_tablero
 
     .posicionar_arr:
     lea rsi, [tablero_arr] ; copio el template de tablero abajo a tablero
     rep movsb
     mov rdi, path_archivo_tablero_arr ; para colorear la fortaleza arriba
+    mov byte [pos_oficial_1], 9
+    mov byte [pos_oficial_2], 4
     jmp .abrir_archivo_tablero 
 
     .posicionar_izq:
     lea rsi, [tablero_izq]
     rep movsb
     mov rdi, path_archivo_tablero_izq
+    mov byte [pos_oficial_1], 14
+    mov byte [pos_oficial_2], 29
     jmp .abrir_archivo_tablero 
 
     .posicionar_der:
     lea rsi, [tablero_der]
     rep movsb
     mov rdi, path_archivo_tablero_der
+    mov byte [pos_oficial_1], 34
+    mov byte [pos_oficial_2], 19
 
     .abrir_archivo_tablero:
     mov rsi, modo_lectura_archivo_tablero
