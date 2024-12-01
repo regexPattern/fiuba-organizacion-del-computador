@@ -55,7 +55,7 @@
     msg_continuar_partida_anterior db 10," • ¿Continuar partida anterior? [Y/n]: ",0
     msg_personalizacion MENSAJE_RESALTADO " Personalizá tu partida "
 
-    msg_elegir_si_personalizar db 10,0x1b,"[1m"," • ¿Desea personalizar la partida? [Y/n]: ",0x1b,"[0m",0
+    msg_elegir_si_personalizar db 10,0x1b,"[1m"," • ¿Desea personalizar la partida? [y/N]: ",0x1b,"[0m",0
     msg_elegir_primer_jugador db 10,0x1b,"[1m"," • ¿Quién mueve primero? [ 1 oficiales | 2 soldados ]: ",0x1b,"[0m",0
     msg_elegir_posicion_fortaleza db 10,0x1b,"[1m"," • ¿En qué posición querés ubicar la fortaleza? [ ^ arriba | > derecha | v abajo | < izquierda ]: ",0x1b,"[0m",0
     msg_elegir_simbolos_oficiales db 10,0x1b,"[1m"," • Ingresá el símbolo para los oficiales: ",0x1b,"[0m",0
@@ -84,11 +84,11 @@
     modo_lectura_archivo_partida db "rb",0
     modo_escritura_archivo_partida db "wb+",0
 
+    es_turno_soldado db 1               ; bandera para alternar turnos (1 = soldado, 0 = oficial)
+
     section .bss
 
-    juego_activo resb 1                   ; bandera para saber si el juego está activo (1 = activo, 0 = terminado)
-    es_turno_soldado resb 1               ; bandera para alternar turnos (1 = soldado, 0 = oficial)
-
+    juego_activo resb 1                    ; bandera para saber si el juego está activo (1 = activo, 0 = terminado)
     buffer_cargar_partida resb 1           ; guardar el valor de la respuesta de la carga de partida anterior
     buffer_elegir_si_personalizar resb 1
     buffer_elegir_primer_jugador resb 1    ; guarda el valor de la respuesta de que jugador empieza
