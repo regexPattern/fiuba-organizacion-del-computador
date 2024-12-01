@@ -30,22 +30,37 @@
 
     section .data
 
-    tablero_aba     db ' ', ' ', 'X', 'X', 'X', ' ', ' '
-                    db ' ', ' ', 'X', 'X', 'X', ' ', ' '
-                    db 'X', 'X', 'X', 'X', 'X', 'X', 'X'
-                    db 'X', 'X', 'X', 'X', 'X', 'X', 'X'
-                    db 'X', 'X', ' ', ' ', ' ', 'X', 'X'
-                    db ' ', ' ', ' ', ' ', 'O', ' ', ' '
-                    db ' ', ' ', 'O', ' ', ' ', ' ', ' '
+    tablero_arr db ' ', ' ', ' ', ' ', 'O', ' ', ' '
+                db ' ', ' ', 'O', ' ', ' ', ' ', ' '
+                db 'X', 'X', ' ', ' ', ' ', 'X', 'X'
+                db 'X', 'X', 'X', 'X', 'X', 'X', 'X'
+                db 'X', 'X', 'X', 'X', 'X', 'X', 'X'
+                db ' ', ' ', 'X', 'X', 'X', ' ', ' '
+                db ' ', ' ', 'X', 'X', 'X', ' ', ' '
 
-    tablero_arr     db ' ', ' ', ' ', ' ', 'O', ' ', ' '
-                    db ' ', ' ', 'O', ' ', ' ', ' ', ' '
-                    db 'X', 'X', ' ', ' ', ' ', 'X', 'X'
-                    db 'X', 'X', ' ', ' ', 'X', 'X', 'X'
-                    db 'X', 'X', ' ', ' ', 'X', 'X', 'X'
-                    db ' ', ' ', ' ', ' ', 'X', ' ', ' '
-                    db ' ', ' ', ' ', ' ', 'X', ' ', ' '
+    tablero_der db ' ', ' ', 'X', 'X', 'X', ' ', ' '
+                db ' ', ' ', 'X', 'X', 'X', ' ', ' '
+                db 'X', 'X', 'X', 'X', ' ', 'O', ' '
+                db 'X', 'X', 'X', 'X', ' ', ' ', ' '
+                db 'X', 'X', 'X', 'X', ' ', ' ', 'O'
+                db ' ', ' ', 'X', 'X', 'X', ' ', ' '
+                db ' ', ' ', 'X', 'X', 'X', ' ', ' '
 
+    tablero_aba db ' ', ' ', 'X', 'X', 'X', ' ', ' '
+                db ' ', ' ', 'X', 'X', 'X', ' ', ' '
+                db 'X', 'X', 'X', 'X', 'X', 'X', 'X'
+                db 'X', 'X', 'X', 'X', 'X', 'X', 'X'
+                db 'X', 'X', ' ', ' ', ' ', 'X', 'X'
+                db ' ', ' ', ' ', ' ', 'O', ' ', ' '
+                db ' ', ' ', 'O', ' ', ' ', ' ', ' '
+
+    tablero_izq db ' ', ' ', 'X', 'X', 'X', ' ', ' '
+                db ' ', ' ', 'X', 'X', 'X', ' ', ' '
+                db 'O', ' ', ' ', 'X', 'X', 'X', 'X'
+                db ' ', ' ', ' ', 'X', 'X', 'X', 'X'
+                db ' ', 'O', ' ', 'X', 'X', 'X', 'X'
+                db ' ', ' ', 'X', 'X', 'X', ' ', ' '
+                db ' ', ' ', 'X', 'X', 'X', ' ', ' '
 
     icono_esq_vacia db "   ",0
     salto_linea db 10,0
@@ -63,10 +78,10 @@
 
     buffer_posicion_fortaleza db "v"
 
-    path_archivo_tablero_abajo db "./static/tablero-aba.dat",0
-    path_archivo_tablero_arriba db "./static/tablero-arr.dat",0
-    path_archivo_tablero_derecha db "./static/tablero-der.dat",0
-    path_archivo_tablero_izquierda db "./static/tablero-izq.dat",0
+    path_archivo_tablero_aba db "./static/tablero-aba.dat",0
+    path_archivo_tablero_arr db "./static/tablero-arr.dat",0
+    path_archivo_tablero_der db "./static/tablero-der.dat",0
+    path_archivo_tablero_izq db "./static/tablero-izq.dat",0
     modo_lectura_archivo_tablero db "rb",0
 
     locale db "en_US.UTF-8",0
@@ -84,35 +99,43 @@
     ; lee el archivo, pues esto se hace directo en el loop de renderizacion.
     ;
 tablero_inicializar:
+    lea rdi, [tablero]          ; Dirección de inicio de tablero (destino)
+    mov rcx, CANTIDAD_ELEMENTOS ; Número de bytes a copiar (igual para todos los tableros)
 
     ; el valor que llega ya esta validado
     cmp byte [buffer_posicion_fortaleza], "^"
-    je .posicionar_arriba
+    je .posicionar_arr
 
     cmp byte [buffer_posicion_fortaleza], "v"
-    je .posicionar_abajo
+    je .posicionar_aba
 
-    .posicionar_abajo:
+    cmp byte [buffer_posicion_fortaleza], "<"
+    je .posicionar_izq
+
+    jmp .posicionar_der
+
+    .posicionar_aba:
     lea rsi, [tablero_aba]          ; Direccion de tablero seleccionado (fuente)
-    lea rdi, [tablero]              ; Dirección de inicio de tablero (destino)
-    mov rcx, CANTIDAD_ELEMENTOS     ; Número de bytes a copiar
     rep movsb
-
-    mov rdi, path_archivo_tablero_abajo
+    mov rdi, path_archivo_tablero_aba ; para colorear la fortaleza abajo
     jmp .abrir_archivo_tablero
 
-    .posicionar_arriba:
-    lea rsi, [tablero_arr]
-    lea rdi, [tablero]
-    mov rcx, 49
+    .posicionar_arr:
+    lea rsi, [tablero_arr] ; copio el template de tablero abajo a tablero
     rep movsb
-
-    mov rdi, path_archivo_tablero_arriba
+    mov rdi, path_archivo_tablero_arr ; para colorear la fortaleza arriba
     jmp .abrir_archivo_tablero 
 
-
-    mov rdi, path_archivo_tablero_izquierda
+    .posicionar_izq:
+    lea rsi, [tablero_izq]
+    rep movsb
+    mov rdi, path_archivo_tablero_izq
     jmp .abrir_archivo_tablero 
+
+    .posicionar_der:
+    lea rsi, [tablero_der]
+    rep movsb
+    mov rdi, path_archivo_tablero_der
 
     .abrir_archivo_tablero:
     mov rsi, modo_lectura_archivo_tablero

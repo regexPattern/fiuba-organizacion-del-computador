@@ -510,13 +510,18 @@ elegir_posicion_fortaleza:
     mov rdi, msg_elegir_posicion_fortaleza
     call printf
 
-    lea rdi, input_opcion_char
-    lea rsi, buffer_posicion_fortaleza
+    mov rdi, input_opcion_char
+    mov rsi, buffer_posicion_fortaleza
     call scanf
 
+    ; opciones validas
     cmp byte [buffer_posicion_fortaleza], "^"
     je .finalizar
+    cmp byte [buffer_posicion_fortaleza], ">"
+    je .finalizar
     cmp byte [buffer_posicion_fortaleza], "v"
+    je .finalizar
+    cmp byte [buffer_posicion_fortaleza], "<"
     je .finalizar
 
     mov rdi, msg_err_seleccion
