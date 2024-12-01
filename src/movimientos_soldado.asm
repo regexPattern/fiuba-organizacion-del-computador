@@ -256,48 +256,78 @@ cargar_movimientos_soldado:
     mov byte [array_movimientos_posibles + rbp], r11b
     inc rbp
 
+    ; =====
+    ; ASPAS
+    ; =====
+    ; la fortaleza esta en el tronco vertical (a como esta por defecto, v o ^)
     .aspa_izquierda:
-    ; si estamos en la última fila
-    cmp r8, 4
-    je .agregar_mov_derecha
+    mov rcx, 1 ; movimiento horizontal posible +1 (hacia la der)
+    jmp .aspa_horizontal_fort_aba
+    .aspa_derecha:
+    mov rcx, -1 ; movimiento horizontal posible -1 (hacia la izq)
 
-    ; no estamos en la última fila del aspa, por lo que al movernos hacia
-    ; adelante no nos saldríamos del tablero
+    ; si la fortaleza esta abajo y estamos en la en la última fila, no podemos
+    ; movernos
+    .aspa_horizontal_fort_aba:
+    cmp r10, "v"
+    jne .aspa_horizontal_fort_arr
+    cmp r8, 4 ; estamos en la ultima fila del tronco horizontal?
+    jne .aspa_horizontal_fort_aba_normal
+
+    ; si efectivamente estamos en el limite del aspa (ultima fila), solo
+    ; podemos movernos horizontalmente, tenemos el offset -1 o 1 puesto en rcx.
     ;
     mov r11, rdi
-    add r11, 7
+    add r11, rcx
     cmp byte [tablero + r11], ' '
-    jne .check_diagonal_der_aspa_izq
+    jne .finalizar
     mov byte [array_movimientos_posibles + rbp], r11b
     inc rbp
+    jmp .finalizar
 
-    ; acá estamos seguros de que no estamos en la última fila de la sección
+    .aspa_horizontal_fort_aba_normal: ; si no estamos en el limite del aspa, podemos hacer un desplazamiento recto normal
+    ; siguiendo en el aspa izq con la fortaleza abajo, si no estamos en la fila
+    ; limite, podemos movernos hacia abajo normal
+    mov r11, rdi
+    add r11, 7 ; aca solo estamos con v (fortaleza abajo)
+    cmp byte [tablero + r11], ' '
+    jne .finalizar ; TODO: ir a checks de diagonales
+    mov byte [array_movimientos_posibles + rbp], r11b
+    inc rbp
+    jmp .finalizar
+
+    ; si llegamos aca sabemos al 100% que la fortaleza esta arriba entonces si
+    ; estamos en la primera fila horizontal del tronco horizontal tampoco
+    ; podemos movernos
+    ;
+    .aspa_horizontal_fort_arr:
+    cmp r8, 2 ; estamos en la primera fila del tronco horizontal?
+    jne .aspa_horizontal_fort_arr_normal ; si no, movemos hacia la fortaleza normal
+    ; si si, entonces el unico movimiento posible es horizontal -1 o +1 en
+    ; funcion de que en aspa estamos (recordemos que aqui estamos en ^)
+    mov r11, rdi
+    add r11, rcx
+    cmp byte [tablero + r11], ' '
+    jne .finalizar
+    mov byte [array_movimientos_posibles + rbp], r11b
+    inc rbp
+    jmp .finalizar
+
+    .aspa_horizontal_fort_arr_normal:
+    mov r11, rdi
+    sub r11, 7 ; aca solo estamos con ^ (fortaleza arriba)
+    cmp byte [tablero + r11], ' '
+    jne .finalizar ; TODO: ir a checks de diagonales
+    mov byte [array_movimientos_posibles + rbp], r11b
+    inc rbp
+    jmp .finalizar
+
+    ; TODO: acá estamos seguros de que no estamos en la última fila de la sección
     ; horizontal de la cruz, por lo que, estando en el aspa izquierda, cualquier
     ; movimiento diagonal a la derecha es válido a menos que esté ocupada esa
     ; casilla
+    ; NOTE: movimiendos diagonales en las aspas
     ;
-    .check_diagonal_der_aspa_izq:
-    ; solo diagonal derecha
-    mov r11, rdi
-    add r11, 8
-    cmp byte [tablero + r11], ' '
-    jne .finalizar
-    mov byte [array_movimientos_posibles + rcx], r11b
-    inc rcx
-    jmp .finalizar
-
-    .aspa_derecha:
-    ; si estamos en la última fila
-    cmp r8, 4
-    je .agregar_mov_izquierda
-
-    mov r11, rdi
-    add r11, 7
-    cmp byte [tablero + r11], ' '
-    jne .check_diagonal_izq_aspa_der
-    mov byte [array_movimientos_posibles + rcx], r11b
-    inc rcx
-
     .aspa_arriba:
     .aspa_abajo:
 
@@ -330,9 +360,9 @@ cargar_movimientos_soldado:
 
     .finalizar:
     mov r8, 12 ; tamaño máximo del arreglo
-    sub r8, rcx ; calculamos cuántas posiciones nos faltan llenar
+    sub r8, rbp ; calculamos cuántas posiciones nos faltan llenar
 
-    mov r9, rcx ; guardamos la posición inicial en r9
+    mov r9, rbp ; guardamos la posición inicial en r9
     mov rcx, r8 ; movemos a rcx la cantidad de iteraciones para loop
 
     .loop_rellenar:
