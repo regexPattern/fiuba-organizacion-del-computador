@@ -80,19 +80,24 @@ seleccionar_proxima_celda:
     mov rdi, mensaje_celdas_disponibles
     call printf
 
+    .seleccionar_fila:
     mov rdi, mensaje_sel_prox_fila
     call printf
 
     mov rdi, input_fila
     mov rsi, buffer_fila_ingresada
     call scanf
+    jmp .validar_fila
 
+    .seleccionar_columna:
     mov rdi, mensaje_sel_prox_col
     call printf
 
     mov rdi, input_col
     mov rsi, buffer_col_ingresada
     call scanf
+    jmp .validar_columna
+    .columna_validada:
 
     sub rsp, 8
     call convertir_input_a_indice
@@ -103,6 +108,18 @@ seleccionar_proxima_celda:
     ; retorna:
     ; - rax: índice de la casilla ingresada
     ;
+    .validar_columna:
+        cmp byte[buffer_col_ingresada], 65
+        jl .seleccionar_columna
+        cmp byte[buffer_col_ingresada], 71
+        jg  .seleccionar_columna
+        jmp .columna_validada
+    .validar_fila:
+        cmp byte[buffer_fila_ingresada], 1
+        jl .seleccionar_fila
+        cmp byte[buffer_fila_ingresada], 7
+        jg  .seleccionar_fila
+        jmp .seleccionar_columna
 convertir_input_a_indice:
     movzx rax, byte [buffer_fila_ingresada]
     dec rax
