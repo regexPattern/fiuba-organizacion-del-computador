@@ -42,12 +42,16 @@ seleccionar_celda:
     mov rsi, buffer_fila_ingresada
     call scanf
 
+    .seleccionar_columna:
     mov rdi, mensaje_sel_col
     call printf
 
     mov rdi, input_col
     mov rsi, buffer_col_ingresada
     call scanf
+
+    jmp .validar_columna
+    .columna_validada:
 
     sub rsp, 8
     call convertir_input_a_indice
@@ -58,6 +62,12 @@ seleccionar_celda:
     ; retorna:
     ; - rax: índice de la casilla a la que se va a mover la ficha
     ;
+    .validar_columna:
+        cmp byte[buffer_col_ingresada], 65
+        jl .seleccionar_columna
+        cmp byte[buffer_col_ingresada], 71
+        jg  .seleccionar_columna
+        jmp .columna_validada
 seleccionar_proxima_celda:
     mov rdi, mensaje_celdas_disponibles
     call printf
