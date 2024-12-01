@@ -16,10 +16,10 @@ for POSICION in "${POSICIONES_FORTALEZA[@]}"; do
                   (i >= 5 && j >= 5) )); then
                 BUFFER_ARCHIVO+="$ANSI_FUERA_DEL_TABLERO"
             else
-                if { [ "$POSICION" = "arr" ]    && (( j >= 2 && j <= 4 && i >= 0 && i <= 2 )); } ||
-                   { [ "$POSICION" = "aba" ]     && (( j >= 2 && j <= 4 && i >= 4 && i <= 6 )); } ||
-                   { [ "$POSICION" = "der" ]   && (( j >= 0 && j <= 2 && i >= 2 && i <= 4 )); } ||
-                   { [ "$POSICION" = "izq" ] && (( j >= 4 && j <= 6 && i >= 2 && i <= 4 )); }; then
+                if { [ "$POSICION" = "arr" ] && (( j >= 2 && j <= 4 && i >= 0 && i <= 2 )); } ||
+                   { [ "$POSICION" = "aba" ] && (( j >= 2 && j <= 4 && i >= 4 && i <= 6 )); } ||
+                   { [ "$POSICION" = "izq" ] && (( j >= 0 && j <= 2 && i >= 2 && i <= 4 )); } ||
+                   { [ "$POSICION" = "der" ] && (( j >= 4 && j <= 6 && i >= 2 && i <= 4 )); }; then
                     BUFFER_ARCHIVO+="$ANSI_DENTRO_DE_LA_FORTALEZA"
                 else
                     BUFFER_ARCHIVO+="$ANSI_DENTRO_DEL_TABLERO"
