@@ -88,7 +88,6 @@
     buffer_ansi_celda resb LONGITUD_CELDA_ASCII ; almacena la sequencia ANSI leída del archivo por cada celda
     file_desc_archivo_tablero resq 1 ; file descriptor archivo tablero
     tablero resb 49 ; Espacio para almacenar el tablero con la orientacion elegida
-    ;temp_tablero resb CANTIDAD_ELEMENTOS ; tablero temporal para realizar la rotacion de 90°
 
     section .text
 
