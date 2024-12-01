@@ -290,10 +290,21 @@ cargar_movimientos_soldado:
     .aspa_horizontal_fort_aba_normal: ; si no estamos en el limite del aspa, podemos hacer un desplazamiento recto normal
     ; siguiendo en el aspa izq con la fortaleza abajo, si no estamos en la fila
     ; limite, podemos movernos hacia abajo normal
+    ;
     mov r11, rdi
     add r11, 7 ; aca solo estamos con v (fortaleza abajo)
     cmp byte [tablero + r11], ' '
-    jne .finalizar ; TODO: ir a checks de diagonales
+    jne .check_diagonal_fort_aba_normal
+    mov byte [array_movimientos_posibles + rbp], r11b
+    inc rbp
+
+    ; si no estamos en el limite del aspa, tambien podemos hacer un movimiento
+    ; diagonal (si esta disponible la casilla claro)
+    ;
+    .check_diagonal_fort_aba_normal:
+    add r11, rcx ; ya estamos en la fila de abajo, pero nos movemos +1 o -1 segun el aspa
+    cmp byte [tablero + r11], ' '
+    jne .finalizar
     mov byte [array_movimientos_posibles + rbp], r11b
     inc rbp
     jmp .finalizar
@@ -319,13 +330,19 @@ cargar_movimientos_soldado:
     mov r11, rdi
     sub r11, 7 ; aca solo estamos con ^ (fortaleza arriba)
     cmp byte [tablero + r11], ' '
-    jne .finalizar ; TODO: ir a checks de diagonales
+    jne .check_diagonal_fort_arr_normal
+    mov byte [array_movimientos_posibles + rbp], r11b
+    inc rbp
+
+    ; movimiento diagonal hacia arriba (izq o der)
+    .check_diagonal_fort_arr_normal:
+    add r11, rcx
+    cmp byte [tablero + r11], ' '
+    jne .finalizar
     mov byte [array_movimientos_posibles + rbp], r11b
     inc rbp
     jmp .finalizar
 
-    ; TODO: movimientos diagonales en las aspas
-    ;
     .aspa_arriba:
     mov rcx, 7 ; movimiento horizontal disponible (fila abajo)
     jmp .aspa_vertical_fort_der
@@ -352,7 +369,15 @@ cargar_movimientos_soldado:
     mov r11, rdi
     inc r11 ; aca solo estamos con > (fortaleza derecha)
     cmp byte [tablero + r11], ' '
-    jne .finalizar ; TODO: ir a checks de diagonales
+    jne .check_diagonal_fort_der_normal
+    mov byte [array_movimientos_posibles + rbp], r11b
+    inc rbp
+
+    ; movimientos diagonales 
+    .check_diagonal_fort_der_normal:
+    add r11, rcx
+    cmp byte [tablero + r11], ' '
+    jne .finalizar
     mov byte [array_movimientos_posibles + rbp], r11b
     inc rbp
     jmp .finalizar
@@ -376,7 +401,14 @@ cargar_movimientos_soldado:
     mov r11, rdi
     dec r11
     cmp byte [tablero + r11], ' '
-    jne .finalizar ; TODO: ir a checks de diagonales
+    jne .check_diagonal_fort_izq_normal
+    mov byte [array_movimientos_posibles + rbp], r11b
+    inc rbp
+
+    .check_diagonal_fort_izq_normal:
+    add r11, rcx
+    cmp byte [tablero + r11], ' '
+    jne .finalizar
     mov byte [array_movimientos_posibles + rbp], r11b
     inc rbp
     jmp .finalizar
