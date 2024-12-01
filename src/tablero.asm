@@ -22,7 +22,7 @@
 
     %define CANTIDAD_COLUMNAS 7
     %define CANTIDAD_ELEMENTOS 49
-    %define LONGITUD_CELDA_ASCII 30
+    %define LONGITUD_CELDA_ASCII 29
 
     %macro MENSAJE_RESALTADO 1
     db 10,0x1b,"[38;5;231;48;5;9m",%1,0x1b,"[0m",10,0
@@ -71,8 +71,8 @@
     salto_linea db 10,0
 
     ; sequencias ANSI
-    ansi_label_celda db 0x1b,"[38;5;033;00000049m %lc ",0x1b,"[0m",0
-    ansi_celda_seleccionada db 0x1b,"[38;5;000;48;5;033m %lc ",0x1b,"[0m",0
+    ansi_label_celda db 0x1b,"[38;5;033;00000049m %c ",0x1b,"[0m",0
+    ansi_celda_seleccionada db 0x1b,"[38;5;000;48;5;033m %c ",0x1b,"[0m",0
     ansi_limpiar_linea db 0x1b,"[%i;0H",0x1b,"[K",0
     ansi_guardar_pos_cursor db 0x1b,"[s",0
     ansi_restaurar_pos_cursor db 0x1b,"[u",0
