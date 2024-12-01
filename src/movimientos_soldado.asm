@@ -40,7 +40,7 @@ cargar_movimientos_soldado:
     add r11, 7
 
     ; verificar si ya estamos en el fondo de la fortaleza (nos salimos del tablero
-    ; si avanzamos a la siguiente fila).
+    ; si avanzamos a la siguiente fila hacia abajo).
     ;
     cmp r11, 48
     jg .finalizar

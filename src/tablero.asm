@@ -1,12 +1,11 @@
     global ansi_celda_seleccionada
-    global buffer_posicion_fortaleza
+    global posicion_fortaleza
     global ptr_path_archivo_tablero
     global tablero
     global tablero_actualizar
     global tablero_finalizar
     global tablero_inicializar
     global tablero_renderizar
-    global tablero_rotar_90
 
     extern fclose
     extern fopen
@@ -14,8 +13,8 @@
     extern printf
     extern rewind
     extern scanf
-    extern buffer_simbolo_oficiales
-    extern buffer_simbolo_soldados
+    extern simbolo_oficiales
+    extern simbolo_soldados
     extern setlocale
     extern pos_oficial_1
     extern pos_oficial_2
@@ -32,7 +31,7 @@
 
     section .data
 
-    buffer_posicion_fortaleza db "^" ; posicion por defecto: abajo
+    posicion_fortaleza db "^" ; posicion por defecto: abajo
 
     tablero_arr db ' ', ' ', ' ', ' ', 'O', ' ', ' '
                 db ' ', ' ', 'O', ' ', ' ', ' ', ' '
@@ -66,12 +65,11 @@
                 db ' ', ' ', 'X', 'X', 'X', ' ', ' '
                 db ' ', ' ', 'X', 'X', 'X', ' ', ' '
 
+    simbolo_oficiales db "O"
+    simbolo_soldados db "X"
+
     icono_esq_vacia db "   ",0
     salto_linea db 10,0
-
-    ;                        "♠",   "♥",   "♣",   "♦",   "♩",   "★"
-    iconos_oficiales dw "O",0x2660,0x2665,0x2663,0x2666,0x2669,0x2605
-    iconos_soldados  dw "X",0x2660,0x2665,0x2663,0x2666,0x2669,0x2605
 
     ; sequencias ANSI
     ansi_label_celda db 0x1b,"[38;5;033;00000049m %lc ",0x1b,"[0m",0
@@ -105,13 +103,13 @@ tablero_inicializar:
     mov rcx, CANTIDAD_ELEMENTOS ; Número de bytes a copiar (igual para todos los tableros)
 
     ; el valor que llega ya esta validado
-    cmp byte [buffer_posicion_fortaleza], "^"
+    cmp byte [posicion_fortaleza], "^"
     je .posicionar_arr
 
-    cmp byte [buffer_posicion_fortaleza], "v"
+    cmp byte [posicion_fortaleza], "v"
     je .posicionar_aba
 
-    cmp byte [buffer_posicion_fortaleza], "<"
+    cmp byte [posicion_fortaleza], "<"
     je .posicionar_izq
 
     jmp .posicionar_der
@@ -274,22 +272,13 @@ tablero_renderizar:
     .cargar_icono_oficial:
     cmp rsi, "O"
     jne .cargar_icono_soldado
-
-    movzx rbp, byte [buffer_simbolo_oficiales]
-    sub rbp, "0"
-    imul rbp, 2
-    movzx rsi, word [iconos_oficiales + rbp]
-
+    movzx rsi, byte [simbolo_oficiales]
     jmp .cargar_icono
 
     .cargar_icono_soldado:
     cmp rsi, "X"
     jne .cargar_icono
-
-    movzx rbp, byte [buffer_simbolo_soldados]
-    sub rbp, "0"
-    imul rbp, 2
-    movzx rsi, word [iconos_soldados + rbp]
+    movzx rsi, byte [simbolo_soldados]
 
     .cargar_icono:
     call printf

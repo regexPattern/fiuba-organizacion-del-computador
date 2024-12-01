@@ -1,6 +1,4 @@
     global main
-    global buffer_simbolo_oficiales
-    global buffer_simbolo_soldados
 
     extern fclose
     extern fflush
@@ -20,9 +18,11 @@
     extern mostrar_estadisticas
     extern pos_oficial_1
     extern pos_oficial_2
-    extern buffer_posicion_fortaleza
+    extern posicion_fortaleza
     extern seleccionar_celda
     extern seleccionar_proxima_celda
+    extern simbolo_oficiales
+    extern simbolo_soldados
     extern tablero
     extern tablero_actualizar
     extern tablero_finalizar
@@ -58,8 +58,8 @@
     msg_elegir_si_personalizar db 10,0x1b,"[1m"," • ¿Desea personalizar la partida? [y/N]: ",0x1b,"[0m",0
     msg_elegir_primer_jugador db 10,0x1b,"[1m"," • ¿Quién mueve primero? [ 1 oficiales | 2 soldados ]: ",0x1b,"[0m",0
     msg_elegir_posicion_fortaleza db 10,0x1b,"[1m"," • ¿En qué posición querés ubicar la fortaleza? [ ^ arriba | > derecha | v abajo | < izquierda ]: ",0x1b,"[0m",0
-    msg_elegir_simbolos_oficiales db 10,0x1b,"[1m"," • Ingresá el símbolo para los oficiales [ 1 ♠ | 2 ♥ | 3 ♣ | 4 ♦ | 5 ♪ | 6 ★ ]: ",0x1b,"[0m",0
-    msg_elegir_simbolos_soldados db 10,0x1b,"[1m"," • Ingresá el símbolo para los soldados [ 1 ♠ | 2 ♥ | 3 ♣ | 4 ♦ | 5 ♪ | 6 ★ ]: ",0x1b,"[0m",0
+    msg_elegir_simbolos_oficiales db 10,0x1b,"[1m"," • Ingresá el símbolo para los oficiales: ",0x1b,"[0m",0
+    msg_elegir_simbolos_soldados db 10,0x1b,"[1m"," • Ingresá el símbolo para los soldados: ",0x1b,"[0m",0
 
     msg_err_seleccion MENSAJE_ERROR " Opción seleccionada no es válida "
     msg_err_seleccion_simbolo_repetido MENSAJE_ERROR " Elegí un símbolo diferente para los soldados "
@@ -83,9 +83,6 @@
     path_archivo_partida db "partida.dat",0
     modo_lectura_archivo_partida db "rb",0
     modo_escritura_archivo_partida db "wb+",0
-
-    buffer_simbolo_oficiales db "0" ; guarda el icono de los oficiales
-    buffer_simbolo_soldados db "0"  ; guarda el icono de los soldados
 
     section .bss
 
@@ -461,13 +458,8 @@ elegir_simbolos:
     call printf
 
     mov rdi, input_opcion_char
-    mov rsi, buffer_simbolo_oficiales
+    mov rsi, simbolo_oficiales
     call scanf
-
-    cmp byte [buffer_simbolo_oficiales], "1"
-    jl .simbolo_oficial_invalido
-    cmp byte [buffer_simbolo_oficiales], "6"
-    jg .simbolo_oficial_invalido
 
     jmp .elegir_simbolo_soldados
 
@@ -481,25 +473,14 @@ elegir_simbolos:
     call printf
 
     mov rdi, input_opcion_char
-    mov rsi, buffer_simbolo_soldados
+    mov rsi, simbolo_soldados
     call scanf
 
-    cmp byte [buffer_simbolo_soldados], "1"
-    jl .simbolo_soldado_invalido
-    cmp byte [buffer_simbolo_soldados], "6"
-    jg .simbolo_soldado_invalido
-
-    ; no elegir el mismo icono
-    mov al, byte [buffer_simbolo_soldados]
-    cmp byte [buffer_simbolo_oficiales], al
+    ; no elegir el mismo simbolo que para los oficiales
+    cmp byte [simbolo_oficiales], al
     jne .finalizar
 
     mov rdi, msg_err_seleccion_simbolo_repetido
-    call printf
-    jmp .elegir_simbolo_soldados
-
-    .simbolo_soldado_invalido:
-    mov rdi, msg_err_seleccion
     call printf
     jmp .elegir_simbolo_soldados
 
@@ -512,17 +493,17 @@ elegir_posicion_fortaleza:
     call printf
 
     mov rdi, input_opcion_char
-    mov rsi, buffer_posicion_fortaleza
+    mov rsi, posicion_fortaleza
     call scanf
 
     ; opciones validas
-    cmp byte [buffer_posicion_fortaleza], "^"
+    cmp byte [posicion_fortaleza], "^"
     je .finalizar
-    cmp byte [buffer_posicion_fortaleza], ">"
+    cmp byte [posicion_fortaleza], ">"
     je .finalizar
-    cmp byte [buffer_posicion_fortaleza], "v"
+    cmp byte [posicion_fortaleza], "v"
     je .finalizar
-    cmp byte [buffer_posicion_fortaleza], "<"
+    cmp byte [posicion_fortaleza], "<"
     je .finalizar
 
     mov rdi, msg_err_seleccion
@@ -546,7 +527,7 @@ guardar_partida:
     call fwrite
 
     ; guardado de la ubicacion de la fortaleza
-    mov rdi, buffer_posicion_fortaleza
+    mov rdi, posicion_fortaleza
     mov rsi, 1
     mov rdx, 1
     mov rcx, [file_desc_archivo_partida]

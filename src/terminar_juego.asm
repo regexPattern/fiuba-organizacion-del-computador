@@ -1,8 +1,8 @@
     global juego_terminado
 
     extern array_movimientos_posibles
-    extern buffer_posicion_fortaleza
     extern cargar_movimientos_oficial
+    extern posicion_fortaleza
     extern tablero
 
     section .text
@@ -19,7 +19,7 @@ juego_terminado:
     ; que dependiendo de la posicion de la fortaleza, qué columnas y filas
     ; checkeamos cambian
     ;
-    mov al, byte [buffer_posicion_fortaleza]
+    mov al, byte [posicion_fortaleza]
 
     cmp al, "^"
     jne .check_fortaleza_der
