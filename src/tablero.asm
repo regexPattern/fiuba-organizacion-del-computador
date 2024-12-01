@@ -32,7 +32,7 @@
 
     posicion_fortaleza db "v" ; posicion por defecto: abajo
 
-        tablero_arr db ' ', ' ', ' ', ' ', 'O', ' ', ' '
+    tablero_arr db ' ', ' ', ' ', ' ', 'O', ' ', ' '
                 db ' ', ' ', 'O', ' ', ' ', ' ', ' '
                 db 'X', 'X', ' ', ' ', ' ', 'X', 'X'
                 db 'X', 'X', 'X', 'X', 'X', 'X', 'X'
@@ -97,6 +97,7 @@
 tablero_inicializar:
     lea rdi, [tablero]          ; Dirección de inicio de tablero (destino)
     mov rcx, CANTIDAD_ELEMENTOS ; Número de bytes a copiar (igual para todos los tableros)
+    movzx r8, byte [tablero] ; si el primer byte es 0, significa que no cargue un arreglo de bytes de una partida anterior cuando inicie el juego
 
     ; el valor que llega ya esta validado
     cmp byte [posicion_fortaleza], "^"
@@ -110,33 +111,61 @@ tablero_inicializar:
 
     jmp .posicionar_der
 
+    ; =========
+    ; v v v v v
+    ; =========
     .posicionar_aba:
-    lea rsi, [tablero_aba]          ; Direccion de tablero seleccionado (fuente)
+    cmp r8, 0
+    jne .cargar_archivo_aba
+    lea rsi, [tablero_aba] ; Direccion de tablero seleccionado (fuente)
     rep movsb
+
+    .cargar_archivo_aba:
     mov rdi, path_archivo_tablero_aba ; para colorear la fortaleza abajo
     mov byte [pos_oficial_1], 44 ; posicion inicial del oficial 1 en este layout
     mov byte [pos_oficial_2], 39 ; posicion inicial del oficial 2 en este layout
     jmp .abrir_archivo_tablero
 
+    ; =========
+    ; ^ ^ ^ ^ ^
+    ; =========
     .posicionar_arr:
-    lea rsi, [tablero_arr] ; copio el template de tablero abajo a tablero
+    cmp r8, 0
+    jne .cargar_archivo_arr
+    lea rsi, [tablero_arr] ; copio el template de tablero arriba a tablero
     rep movsb
+
+    .cargar_archivo_arr:
     mov rdi, path_archivo_tablero_arr ; para colorear la fortaleza arriba
     mov byte [pos_oficial_1], 9
     mov byte [pos_oficial_2], 4
     jmp .abrir_archivo_tablero 
 
+    ; =========
+    ; < < < < <
+    ; =========
     .posicionar_izq:
+    cmp r8, 0
+    jne .cargar_archivo_izq
     lea rsi, [tablero_izq]
     rep movsb
+
+    .cargar_archivo_izq:
     mov rdi, path_archivo_tablero_izq
     mov byte [pos_oficial_1], 14
     mov byte [pos_oficial_2], 29
     jmp .abrir_archivo_tablero 
 
+    ; =========
+    ; > > > > >
+    ; =========
     .posicionar_der:
+    cmp r8, 0
+    jne .cargar_archivo_der
     lea rsi, [tablero_der]
     rep movsb
+
+    .cargar_archivo_der:
     mov rdi, path_archivo_tablero_der
     mov byte [pos_oficial_1], 34
     mov byte [pos_oficial_2], 19

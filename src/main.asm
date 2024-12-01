@@ -416,28 +416,28 @@ partida_inicializar:
     mov rcx, [file_desc_archivo_partida]
     call fread
 
-    ; leemos la posicion de la fortaleza
+    ; 2. leemos la posicion de la fortaleza
     mov rdi, posicion_fortaleza
     mov rsi, 1
     mov rdx, 1
     mov rcx, [file_desc_archivo_partida]
     call fread
 
-    ; leemos simboles de oficiales y soldados
+    ; 3. leemos simboles de oficiales y soldados
     mov rdi, simbolo_oficiales
     mov rsi, 1 ; bytes
     mov rdx, 2 ; dos simbolos
     mov rcx, [file_desc_archivo_partida]
     call fread
 
-    ; leemos las fichas del tablero
+    ; 4. leemos las fichas del tablero
     mov rdi, tablero
     mov rsi, 1 ; bytes
     mov rdx, 49 ; celdas 
     mov rcx, [file_desc_archivo_partida]
     call fread
 
-    ; leemos las estadisticas de los oficiales
+    ; 5. leemos las estadisticas de los oficiales
     mov rdi, pos_oficial_1
     mov rsi, 1 ; bytes
     mov rdx, 38
