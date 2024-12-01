@@ -425,24 +425,27 @@ partida_inicializar:
 
     ; leemos simboles de oficiales y soldados
     mov rdi, simbolo_oficiales
-    mov rsi, 1
-    mov rdx, 2
+    mov rsi, 1 ; bytes
+    mov rdx, 2 ; dos simbolos
     mov rcx, [file_desc_archivo_partida]
     call fread
 
     ; leemos las fichas del tablero
     mov rdi, tablero
-    mov rsi, 1
-    mov rdx, 49
+    mov rsi, 1 ; bytes
+    mov rdx, 49 ; celdas 
     mov rcx, [file_desc_archivo_partida]
     call fread
 
     ; leemos las estadisticas de los oficiales
     mov rdi, pos_oficial_1
-    mov rsi, 1
+    mov rsi, 1 ; bytes
     mov rdx, 38
     mov rcx, [file_desc_archivo_partida]
     call fread
+
+    mov rdi, [file_desc_archivo_partida]
+    call fclose
 
     ret
 
