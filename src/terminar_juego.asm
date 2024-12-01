@@ -1,6 +1,7 @@
     global juego_terminado
 
     extern array_movimientos_posibles
+    extern buffer_posicion_fortaleza
     extern cargar_movimientos_oficial
     extern tablero
 
@@ -14,13 +15,42 @@
     ;
 juego_terminado:
     ; Primero revisamos si los soldados ocupan todos los puntos del interior de
-    ; la fortaleza. Si esto se cumple entonces ganan los soldados.
+    ; la fortaleza. Si esto se cumple entonces ganan los soldados. el tema es
+    ; que dependiendo de la posicion de la fortaleza, qué columnas y filas
+    ; checkeamos cambian
     ;
-    .verificar_soldados_en_fortaleza:
-    mov r8, 4 ; índice filas
+    mov al, byte [buffer_posicion_fortaleza]
 
+    cmp al, "^"
+    jne .check_fortaleza_der
+    mov bl, 0 ; índice fila inicial
+    mov cl, 2 ; ínidice de columna inicial (se reinicia en cada fila)
+    ; la fortaleza siempre es de 3x3, asi que con saber los indices iniciales nos basta
+    jmp .loop
+
+    .check_fortaleza_der:
+    cmp al, ">"
+    jne .check_fortaleza_aba
+    mov bl, 2
+    mov cl, 4
+    jmp .loop
+
+    .check_fortaleza_aba:
+    cmp al, "v"
+    jne .check_fortaleza_izq
+    mov bl, 4
+    mov cl, 2
+    jmp .loop
+
+    .check_fortaleza_izq:
+    mov bl, 2
+    mov cl, 0
+
+    .loop:
+    ; inicio de los loops
+    movzx r8, bl ; índice loop filas
     .loop_filas_fortaleza:
-    mov r9, 2 ; índice columnas
+    movzx r9, cl ; índice loop columnas
 
     .loop_columnas_fortaleza:
     mov r10, r8
@@ -33,12 +63,16 @@ juego_terminado:
     cmp byte [tablero + r10], 'X'
     jne .verificar_oficiales_incapacitados
 
+    movzx rax, cl
+    add rax, 3 ; llegamos al final del loop, si recorrimos 3 columnas desde la inicial, sea cual sea segun los posicion de la fortaleza
     inc r9
-    cmp r9, 5
+    cmp r9, rax
     jl .loop_columnas_fortaleza
 
+    movzx rax, bl
+    add rax, 3 ; lo mismo para las filas
     inc r8
-    cmp r8, 7
+    cmp r8, rax
     jl .loop_filas_fortaleza
 
     ; Si llegamos acá es porque todos los que están en la fortaleza son soldados
