@@ -378,10 +378,27 @@ partida_inicializar:
     je .nueva_partida
 
     .cargar_partida_anterior:
-    ; leemos quien tiene el proximo turno
+    ; para la lectura del archivo respectamos los ordenes de escritura de los
+    ; bytes
+    ;
+    ; 1. leemos quien tiene el proximo turno
     mov rdi, es_turno_soldado
     mov rsi, 1
     mov rdx, 1
+    mov rcx, [file_desc_archivo_partida]
+    call fread
+
+    ; leemos la posicion de la fortaleza
+    mov rdi, posicion_fortaleza
+    mov rsi, 1
+    mov rdx, 1
+    mov rcx, [file_desc_archivo_partida]
+    call fread
+
+    ; leemos simboles de oficiales y soldados
+    mov rdi, simbolo_oficiales
+    mov rsi, 1
+    mov rdx, 2
     mov rcx, [file_desc_archivo_partida]
     call fread
 
@@ -518,6 +535,13 @@ guardar_partida:
     mov rsi, modo_escritura_archivo_partida
     call fopen
     mov [file_desc_archivo_partida], rax
+    
+    ; orden de guardao en bytes (es importante para la lectura en el mismo orden)
+    ; 1. 1 byte - turno
+    ; 2. 1 byte - posicion fortaleza
+    ; 3. 2 bytes - simbolos oficiales y soldados
+    ; 4. 49 bytes - estado del tablero
+    ; 5. 38 bytes - posiciones y estadisticas de los oficiales
 
     ; guardado de quien tiene el proximo turno
     mov rdi, es_turno_soldado ; ya en este momento se cambió al siguiente
@@ -526,10 +550,17 @@ guardar_partida:
     mov rcx, [file_desc_archivo_partida]
     call fwrite
 
-    ; guardado de la ubicacion de la fortaleza
+    ; guardado de la posicion de la fortaleza
     mov rdi, posicion_fortaleza
     mov rsi, 1
     mov rdx, 1
+    mov rcx, [file_desc_archivo_partida]
+    call fwrite
+
+    ; guardo los simbolos de los oficiales y soldados
+    mov rdi, simbolo_oficiales
+    mov rsi, 1
+    mov rdx, 2 ; se guarda el de los soldados tambien
     mov rcx, [file_desc_archivo_partida]
     call fwrite
 
@@ -543,7 +574,7 @@ guardar_partida:
     ; guardado de las estadisticas de los oficiales
     mov rdi, pos_oficial_1
     mov rsi, 1
-    mov rdx, 38
+    mov rdx, 38 ; esto me guarda las estadisticas y la pos del otro oficial
     mov rcx, [file_desc_archivo_partida]
     call fwrite
 
